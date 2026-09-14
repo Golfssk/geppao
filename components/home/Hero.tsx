@@ -1,0 +1,4 @@
+'use client';
+import { useRouter } from 'next/navigation';
+import { useState } from 'react';
+export function Hero(){const router=useRouter();const [q,setQ]=useState('');return <section className="hero"><div className="container"><h1>เก็บเป๋า... แล้วไปแฮงเอ้ากัน</h1><p>รวมพูลวิลล่า แคมป์ คาเฟ่ และจุดแฮงเอ้าท์เขาใหญ่ พร้อม AI ที่ช่วยจัดทริปให้เหมาะกับแก๊งของคุณ</p><div className="ai-search"><input value={q} onChange={e=>setQ(e.target.value)} onKeyDown={e=>e.key==='Enter'&&router.push(`/planner?q=${encodeURIComponent(q)}`)} placeholder="เช่น ไป 8 คน สายปาร์ตี้ มีหมา งบ 2,000 บาท/คน"/><button className="btn btn-rust" onClick={()=>router.push(`/planner?q=${encodeURIComponent(q)}`)}>ให้ AI จัดทริป</button></div><div className="chips">{['🌿 ชิลธรรมชาติ','🍻 ปาร์ตี้','👨‍👩‍👧 ครอบครัว','💑 คู่รัก','🏕 Camping','☕ Café Hopping'].map(x=><button key={x} className="chip" onClick={()=>router.push(`/search?vibe=${encodeURIComponent(x.slice(2))}`)}>{x}</button>)}</div></div></section>}

@@ -1,0 +1,1 @@
+export const HOST_PACKAGES={standard:{name:'Standard',price:99,features:['ลงประกาศ','Listing page','Contact lead','Standard visibility']},premium:{name:'Premium',price:399,features:['ทุกอย่างใน Standard','Premium Badge','AI Recommendation Boost','Featured placement','AI Exposure Analytics']}} as const;
