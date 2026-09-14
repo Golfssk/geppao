@@ -1,3 +1,10 @@
 import { NextResponse } from 'next/server';
-import { listings } from '@/data';
-export async function GET(){return NextResponse.json(listings);}
+import { createClient } from '@/lib/supabase/server';
+
+export async function GET() {
+  const supabase = await createClient();
+  const { data, error } = await supabase.from('listings').select('*').eq('status', 'published');
+
+  if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+  return NextResponse.json(data);
+}
