@@ -21,9 +21,7 @@ export default async function StayDetail({ params }: { params: Promise<{ slug: s
       <div className="container detail">
         <a href="/search" className="muted">← กลับไปค้นหา</a>
         <div className="card" style={{ marginTop: 20 }}>
-          <div className="thumb" style={{ height: 340 }}>
-            {l.tier === 'premium' && <span className="badge">Premium Partner</span>}
-          </div>
+          <div className="thumb" style={{ height: 340 }}></div>
           <div className="card-body">
             <h1>{l.name}</h1>
             <p className="muted">{l.location}</p>
