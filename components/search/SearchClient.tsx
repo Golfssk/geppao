@@ -3,8 +3,8 @@ import { useMemo, useState } from 'react';
 import type { Listing } from '@/types/listing';
 import { ListingCard } from '@/components/listing/ListingCard';
 
-const CATEGORY_LABELS:Record<string,string>={'pool-villa':'พูลวิลล่า','camping':'แคมป์ปิ้ง','cafe':'คาเฟ่'};
-const VIBE_LABELS:Record<string,string>={party:'ปาร์ตี้',group:'กลุ่มใหญ่',nature:'ธรรมชาติ',chill:'ชิล',cafe:'คาเฟ่',family:'ครอบครัว',couple:'คู่รัก'};
+const CATEGORY_LABELS:Record<string,string>={'poolvilla':'พูลวิลล่า','camping':'แคมป์ปิ้ง','cafe':'คาเฟ่'};
+const VIBE_LABELS:Record<string,string>={party:'ปาร์ตี้',group:'กลุ่มใหญ่',nature:'ธรรมชาติ',chill:'ชิล',cafe:'คาเฟ่',family:'ครอบครัว',couple:'คู่รัก',photography:'ถ่ายรูป',minimal:'มินิมอล',luxury:'Luxury',fun:'สนุก'};
 type SortKey='recommended'|'price-asc'|'price-desc';
 
 export function SearchClient({listings,initialVibe}:{listings:Listing[];initialVibe?:string}){
@@ -31,7 +31,6 @@ export function SearchClient({listings,initialVibe}:{listings:Listing[];initialV
     );
     if(sort==='price-asc')r=[...r].sort((a,b)=>a.price-b.price);
     if(sort==='price-desc')r=[...r].sort((a,b)=>b.price-a.price);
-    if(sort==='recommended')r=[...r].sort((a,b)=>(b.tier==='premium'?1:0)-(a.tier==='premium'?1:0));
     return r;
   },[listings,category,selectedVibes,guests,priceMax,petFriendly,sort]);
 
