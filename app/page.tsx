@@ -21,7 +21,7 @@ export default async function Home() {
           <div className="section-head">
             <div>
               <h2>ที่พักที่น่าสนใจ</h2>
-              <p className="muted">Premium Partner ได้รับ boost เมื่อเข้ากับความต้องการของคุณ</p>
+              <p className="muted">ค้นหาที่พักที่เข้ากับสไตล์และความต้องการของคุณ</p>
             </div>
             <a href="/search" className="muted">ดูทั้งหมด →</a>
           </div>
