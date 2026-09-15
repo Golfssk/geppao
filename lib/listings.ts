@@ -13,7 +13,6 @@ type ListingRow = {
   amenities: string[] | null;
   pet_friendly: boolean;
   party_friendly: boolean;
-  tier: 'standard' | 'premium';
   description: string | null;
   images?: string[] | null;
 };
@@ -32,7 +31,6 @@ export function mapListing(row: ListingRow): Listing {
     amenities: row.amenities ?? [],
     petFriendly: row.pet_friendly,
     partyFriendly: row.party_friendly,
-    tier: row.tier,
     description: row.description ?? undefined,
     images: row.images ?? undefined,
   };
