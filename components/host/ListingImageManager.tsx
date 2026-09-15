@@ -1,7 +1,6 @@
 'use client';
 
 import { ChangeEvent, useState } from 'react';
-import Image from 'next/image';
 
 export function ListingImageManager({ listingId, images: initialImages }: { listingId: string; images: string[] }) {
   const [images, setImages] = useState(initialImages);
@@ -59,9 +58,9 @@ export function ListingImageManager({ listingId, images: initialImages }: { list
         {images.length === 0 ? <div className="thumb" style={{ height: 220, marginTop: 16, display: 'grid', placeItems: 'center' }}><span className="muted">ยังไม่มีรูปภาพ</span></div> : (
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(180px, 1fr))', gap: 12, marginTop: 16 }}>
             {images.map((url, index) => (
-              <div key={url} style={{ position: 'relative' }}>
-                <div style={{ position: 'relative', aspectRatio: '4 / 3', overflow: 'hidden', borderRadius: 12, background: 'var(--sand)' }}>
-                  <Image src={url} alt={`รูปที่พัก ${index + 1}`} fill sizes="(max-width: 820px) 50vw, 180px" style={{ objectFit: 'cover' }} unoptimized />
+              <div key={url}>
+                <div style={{ aspectRatio: '4 / 3', overflow: 'hidden', borderRadius: 12, background: 'var(--sand)' }}>
+                  <img src={url} alt={`รูปที่พัก ${index + 1}`} style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />
                 </div>
                 <button type="button" className="btn" style={{ marginTop: 8, width: '100%' }} onClick={() => remove(url)}>ลบรูป</button>
               </div>
