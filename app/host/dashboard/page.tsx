@@ -25,6 +25,7 @@ export default async function HostDashboard() {
     .order('created_at', { ascending: false });
 
   const listings = listingsError ? [] : (listingRows ?? []).map(mapListing);
+  const publishedCount = listings.filter((listing) => listing.status === 'published').length;
 
   return (
     <main className="page">
@@ -37,7 +38,7 @@ export default async function HostDashboard() {
               {host.contact_name || user.email} · {host.status}
             </p>
           </div>
-          <Link href="/host" className="btn btn-primary">กลับหน้าสำหรับ Host</Link>
+          <Link href="/host/listings/new" className="btn btn-primary">+ เพิ่มที่พัก</Link>
         </div>
 
         <div className="dashboard-grid" style={{ marginTop: 24 }}>
@@ -47,7 +48,7 @@ export default async function HostDashboard() {
           </div>
           <div className="stat">
             <div className="muted">เผยแพร่แล้ว</div>
-            <div className="stat-value">{listings.length}</div>
+            <div className="stat-value">{publishedCount}</div>
           </div>
           <div className="stat">
             <div className="muted">สถานะบัญชี</div>
@@ -79,6 +80,9 @@ export default async function HostDashboard() {
               <p className="muted" style={{ marginTop: 6 }}>
                 บัญชีนี้ยังไม่มี Listing ที่เชื่อมอยู่ครับ
               </p>
+              <Link href="/host/listings/new" className="btn btn-primary" style={{ marginTop: 18 }}>
+                เพิ่มที่พักแรกของคุณ
+              </Link>
             </div>
           )}
         </section>
