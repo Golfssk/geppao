@@ -3,7 +3,7 @@ import Link from 'next/link';
 import { createClient } from '@/lib/supabase/server';
 import { mapListing } from '@/lib/listings';
 import { ListingCard } from '@/components/listing/ListingCard';
-import { ListingStatusButton } from '@/components/host/ListingStatusButton';
+import { HostListingActions } from '@/components/host/HostListingActions';
 
 export default async function HostDashboard() {
   const supabase = await createClient();
@@ -73,8 +73,13 @@ export default async function HostDashboard() {
             <div className="grid">
               {listings.map((listing) => (
                 <div key={listing.id}>
-                  <ListingCard listing={listing} editable />
-                  <ListingStatusButton listingId={listing.id} status={listing.status} />
+                  <ListingCard listing={listing} />
+                  <div style={{ marginTop: -8 }}>
+                    <div className="muted" style={{ padding: '0 16px 8px', fontSize: '.85rem' }}>
+                      สถานะ: <strong>{listing.status === 'published' ? 'Published' : 'Draft'}</strong>
+                    </div>
+                    <HostListingActions listing={listing} />
+                  </div>
                 </div>
               ))}
             </div>
