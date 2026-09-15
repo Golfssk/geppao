@@ -15,6 +15,7 @@ type ListingRow = {
   party_friendly: boolean;
   description: string | null;
   images?: string[] | null;
+  status?: string | null;
 };
 
 export function mapListing(row: ListingRow): Listing {
@@ -33,5 +34,6 @@ export function mapListing(row: ListingRow): Listing {
     partyFriendly: row.party_friendly,
     description: row.description ?? undefined,
     images: row.images ?? undefined,
+    status: row.status ?? undefined,
   };
 }
