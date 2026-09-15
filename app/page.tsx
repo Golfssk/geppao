@@ -2,10 +2,16 @@ import { Hero } from '@/components/home/Hero';
 import { HostCTA } from '@/components/home/HostCTA';
 import { ListingCard } from '@/components/listing/ListingCard';
 import { createClient } from '@/lib/supabase/server';
+import { mapListing } from '@/lib/listings';
 
 export default async function Home() {
   const supabase = await createClient();
-  const { data: listings } = await supabase.from('listings').select('*').eq('status', 'published');
+  const { data, error } = await supabase
+    .from('listings')
+    .select('*')
+    .eq('status', 'published');
+
+  const listings = data?.map(mapListing) ?? [];
 
   return (
     <main>
@@ -20,8 +26,8 @@ export default async function Home() {
             <a href="/search" className="muted">ดูทั้งหมด →</a>
           </div>
           <div className="grid">
-            {listings?.map((l) => (
-              <ListingCard key={l.id} listing={l} />
+            {!error && listings.map((listing) => (
+              <ListingCard key={listing.id} listing={listing} />
             ))}
           </div>
         </div>
