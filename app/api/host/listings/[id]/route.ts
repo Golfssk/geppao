@@ -71,3 +71,38 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
   return NextResponse.json(data);
 }
+
+export async function DELETE(request: Request, { params }: { params: Promise<{ id: string }> }) {
+  const { id } = await params;
+  const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+
+  if (!user) return NextResponse.json({ error: 'กรุณาเข้าสู่ระบบก่อนครับ' }, { status: 401 });
+
+  const { data: host, error: hostError } = await supabase
+    .from('hosts')
+    .select('id, status')
+    .eq('user_id', user.id)
+    .maybeSingle();
+
+  if (hostError || !host) return NextResponse.json({ error: 'ไม่พบข้อมูล Host ของบัญชีนี้ครับ' }, { status: 403 });
+  if (host.status !== 'active') return NextResponse.json({ error: 'บัญชี Host นี้ยังไม่พร้อมลบ Listing ครับ' }, { status: 403 });
+
+  const { data: ownedListing, error: listingError } = await supabase
+    .from('listings')
+    .select('id')
+    .eq('id', id)
+    .eq('host_id', host.id)
+    .maybeSingle();
+
+  if (listingError || !ownedListing) return NextResponse.json({ error: 'ไม่พบ Listing นี้ในบัญชีของคุณครับ' }, { status: 404 });
+
+  const { error } = await supabase
+    .from('listings')
+    .delete()
+    .eq('id', id)
+    .eq('host_id', host.id);
+
+  if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+  return NextResponse.json({ success: true });
+}
