@@ -11,6 +11,12 @@ function makeSlug(value: string) {
   return `${base || 'listing'}-${Date.now().toString(36)}`;
 }
 
+function optionalNumber(value: unknown) {
+  if (value === '' || value === null || value === undefined) return null;
+  const number = Number(value);
+  return Number.isFinite(number) ? number : null;
+}
+
 export async function POST(request: Request) {
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
@@ -31,9 +37,15 @@ export async function POST(request: Request) {
   const location = String(body.location || '').trim();
   const price = Number(body.price);
   const capacity = Number(body.capacity);
+  const latitude = optionalNumber(body.latitude);
+  const longitude = optionalNumber(body.longitude);
 
   if (!name || !location || !Number.isFinite(price) || price < 0 || !Number.isInteger(capacity) || capacity < 1) {
     return NextResponse.json({ error: 'กรุณากรอกชื่อ ทำเล ราคา และจำนวนผู้เข้าพักให้ถูกต้องครับ' }, { status: 400 });
+  }
+
+  if ((latitude !== null && (latitude < -90 || latitude > 90)) || (longitude !== null && (longitude < -180 || longitude > 180))) {
+    return NextResponse.json({ error: 'พิกัด Latitude / Longitude ไม่ถูกต้องครับ' }, { status: 400 });
   }
 
   const { data, error } = await supabase
@@ -43,6 +55,10 @@ export async function POST(request: Request) {
       name,
       slug: makeSlug(name),
       location,
+      address: String(body.address || '').trim() || null,
+      latitude,
+      longitude,
+      google_maps_url: String(body.googleMapsUrl || '').trim() || null,
       price,
       price_unit: String(body.priceUnit || ' / คืน'),
       capacity,
