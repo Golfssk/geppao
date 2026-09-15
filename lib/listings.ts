@@ -5,6 +5,10 @@ type ListingRow = {
   slug: string;
   name: string;
   location: string;
+  address?: string | null;
+  latitude?: number | null;
+  longitude?: number | null;
+  google_maps_url?: string | null;
   price: number;
   price_unit: string;
   capacity: number;
@@ -24,6 +28,10 @@ export function mapListing(row: ListingRow): Listing {
     slug: row.slug,
     name: row.name,
     location: row.location,
+    address: row.address ?? undefined,
+    latitude: row.latitude ?? undefined,
+    longitude: row.longitude ?? undefined,
+    googleMapsUrl: row.google_maps_url ?? undefined,
     price: row.price,
     priceUnit: row.price_unit,
     capacity: row.capacity,
