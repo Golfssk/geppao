@@ -71,7 +71,7 @@ export default async function HostDashboard() {
           {listings.length > 0 ? (
             <div className="grid">
               {listings.map((listing) => (
-                <ListingCard key={listing.id} listing={listing} />
+                <ListingCard key={listing.id} listing={listing} editable />
               ))}
             </div>
           ) : (
