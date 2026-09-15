@@ -9,17 +9,9 @@ const AMENITIES = ['สระว่ายน้ำส่วนตัว', 'Free 
 export function HostListingForm() {
   const router = useRouter();
   const [form, setForm] = useState({
-    name: '',
-    location: '',
-    price: '',
-    priceUnit: ' / คืน',
-    capacity: '2',
-    category: 'poolvilla',
-    description: '',
-    vibes: [] as string[],
-    amenities: [] as string[],
-    petFriendly: false,
-    partyFriendly: false,
+    name: '', location: '', address: '', latitude: '', longitude: '', googleMapsUrl: '',
+    price: '', priceUnit: ' / คืน', capacity: '2', category: 'poolvilla', description: '',
+    vibes: [] as string[], amenities: [] as string[], petFriendly: false, partyFriendly: false,
   });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
@@ -32,23 +24,14 @@ export function HostListingForm() {
     event.preventDefault();
     setError('');
     setLoading(true);
-
     const response = await fetch('/api/host/listings', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(form),
+      method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(form),
     });
-
     const result = await response.json();
-
     if (!response.ok) {
-      setError(result.error || 'ไม่สามารถสร้าง Listing ได้ครับ');
-      setLoading(false);
-      return;
+      setError(result.error || 'ไม่สามารถสร้าง Listing ได้ครับ'); setLoading(false); return;
     }
-
-    router.push('/host/dashboard');
-    router.refresh();
+    router.push('/host/dashboard'); router.refresh();
   }
 
   return (
@@ -60,71 +43,42 @@ export function HostListingForm() {
         </div>
 
         <div className="grid" style={{ marginTop: 16 }}>
-          <div className="filter-group">
-            <label htmlFor="location">ทำเล *</label>
-            <input id="location" placeholder="เช่น ปากช่อง นครราชสีมา" value={form.location} onChange={(e) => setForm({ ...form, location: e.target.value })} required />
-          </div>
-          <div className="filter-group">
-            <label htmlFor="category">ประเภทที่พัก *</label>
-            <select id="category" value={form.category} onChange={(e) => setForm({ ...form, category: e.target.value })}>
-              <option value="poolvilla">Pool Villa</option>
-              <option value="camping">Camping</option>
-            </select>
-          </div>
-        </div>
-
-        <div className="grid" style={{ marginTop: 16 }}>
-          <div className="filter-group">
-            <label htmlFor="price">ราคา *</label>
-            <input id="price" type="number" min="0" value={form.price} onChange={(e) => setForm({ ...form, price: e.target.value })} required />
-          </div>
-          <div className="filter-group">
-            <label htmlFor="priceUnit">หน่วยราคา</label>
-            <select id="priceUnit" value={form.priceUnit} onChange={(e) => setForm({ ...form, priceUnit: e.target.value })}>
-              <option value=" / คืน">/ คืน</option>
-              <option value=" / คน / คืน">/ คน / คืน</option>
-            </select>
-          </div>
-          <div className="filter-group">
-            <label htmlFor="capacity">รองรับได้ (คน) *</label>
-            <input id="capacity" type="number" min="1" value={form.capacity} onChange={(e) => setForm({ ...form, capacity: e.target.value })} required />
-          </div>
+          <div className="filter-group"><label htmlFor="location">ทำเล *</label><input id="location" placeholder="เช่น ปากช่อง นครราชสีมา" value={form.location} onChange={(e) => setForm({ ...form, location: e.target.value })} required /></div>
+          <div className="filter-group"><label htmlFor="category">ประเภทที่พัก *</label><select id="category" value={form.category} onChange={(e) => setForm({ ...form, category: e.target.value })}><option value="poolvilla">Pool Villa</option><option value="camping">Camping</option></select></div>
         </div>
 
         <div className="filter-group" style={{ marginTop: 16 }}>
-          <label htmlFor="description">คำอธิบาย</label>
-          <textarea id="description" rows={4} value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })} placeholder="เล่าจุดเด่นและบรรยากาศของที่พัก" />
+          <label htmlFor="address">ที่อยู่</label>
+          <input id="address" placeholder="บ้านเลขที่ / ถนน / ตำบล / อำเภอ / จังหวัด" value={form.address} onChange={(e) => setForm({ ...form, address: e.target.value })} />
         </div>
 
-        <div className="filter-group" style={{ marginTop: 20 }}>
-          <label>Vibe</label>
-          <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, marginTop: 8 }}>
-            {VIBES.map((vibe) => (
-              <button key={vibe} type="button" className={form.vibes.includes(vibe) ? 'btn btn-primary' : 'btn'} onClick={() => setForm({ ...form, vibes: toggle(form.vibes, vibe) })}>{vibe}</button>
-            ))}
-          </div>
+        <div className="grid" style={{ marginTop: 16 }}>
+          <div className="filter-group"><label htmlFor="latitude">Latitude</label><input id="latitude" type="number" step="any" placeholder="14.705" value={form.latitude} onChange={(e) => setForm({ ...form, latitude: e.target.value })} /></div>
+          <div className="filter-group"><label htmlFor="longitude">Longitude</label><input id="longitude" type="number" step="any" placeholder="101.416" value={form.longitude} onChange={(e) => setForm({ ...form, longitude: e.target.value })} /></div>
         </div>
 
-        <div className="filter-group" style={{ marginTop: 20 }}>
-          <label>Amenities</label>
-          <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, marginTop: 8 }}>
-            {AMENITIES.map((amenity) => (
-              <button key={amenity} type="button" className={form.amenities.includes(amenity) ? 'btn btn-primary' : 'btn'} onClick={() => setForm({ ...form, amenities: toggle(form.amenities, amenity) })}>{amenity}</button>
-            ))}
-          </div>
+        <div className="filter-group" style={{ marginTop: 16 }}>
+          <label htmlFor="googleMapsUrl">Google Maps URL</label>
+          <input id="googleMapsUrl" type="url" placeholder="วางลิงก์ Google Maps ของที่พัก" value={form.googleMapsUrl} onChange={(e) => setForm({ ...form, googleMapsUrl: e.target.value })} />
+          <p className="muted" style={{ marginTop: 6, fontSize: '.85rem' }}>แนะนำให้ใส่ Latitude + Longitude และลิงก์ Google Maps เพื่อระบุตำแหน่งได้แม่นยำ</p>
         </div>
 
-        <div style={{ display: 'flex', gap: 20, flexWrap: 'wrap', marginTop: 20 }}>
-          <label><input type="checkbox" checked={form.petFriendly} onChange={(e) => setForm({ ...form, petFriendly: e.target.checked })} /> Pet friendly</label>
-          <label><input type="checkbox" checked={form.partyFriendly} onChange={(e) => setForm({ ...form, partyFriendly: e.target.checked })} /> Party friendly</label>
+        <div className="grid" style={{ marginTop: 16 }}>
+          <div className="filter-group"><label htmlFor="price">ราคา *</label><input id="price" type="number" min="0" value={form.price} onChange={(e) => setForm({ ...form, price: e.target.value })} required /></div>
+          <div className="filter-group"><label htmlFor="priceUnit">หน่วยราคา</label><select id="priceUnit" value={form.priceUnit} onChange={(e) => setForm({ ...form, priceUnit: e.target.value })}><option value=" / คืน">/ คืน</option><option value=" / คน / คืน">/ คน / คืน</option></select></div>
+          <div className="filter-group"><label htmlFor="capacity">รองรับได้ (คน) *</label><input id="capacity" type="number" min="1" value={form.capacity} onChange={(e) => setForm({ ...form, capacity: e.target.value })} required /></div>
         </div>
+
+        <div className="filter-group" style={{ marginTop: 16 }}><label htmlFor="description">คำอธิบาย</label><textarea id="description" rows={4} value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })} placeholder="เล่าจุดเด่นและบรรยากาศของที่พัก" /></div>
+
+        <div className="filter-group" style={{ marginTop: 20 }}><label>Vibe</label><div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, marginTop: 8 }}>{VIBES.map((vibe) => <button key={vibe} type="button" className={form.vibes.includes(vibe) ? 'btn btn-primary' : 'btn'} onClick={() => setForm({ ...form, vibes: toggle(form.vibes, vibe) })}>{vibe}</button>)}</div></div>
+
+        <div className="filter-group" style={{ marginTop: 20 }}><label>Amenities</label><div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, marginTop: 8 }}>{AMENITIES.map((amenity) => <button key={amenity} type="button" className={form.amenities.includes(amenity) ? 'btn btn-primary' : 'btn'} onClick={() => setForm({ ...form, amenities: toggle(form.amenities, amenity) })}>{amenity}</button>)}</div></div>
+
+        <div style={{ display: 'flex', gap: 20, flexWrap: 'wrap', marginTop: 20 }}><label><input type="checkbox" checked={form.petFriendly} onChange={(e) => setForm({ ...form, petFriendly: e.target.checked })} /> Pet friendly</label><label><input type="checkbox" checked={form.partyFriendly} onChange={(e) => setForm({ ...form, partyFriendly: e.target.checked })} /> Party friendly</label></div>
 
         {error && <p role="alert" style={{ color: 'var(--rust)', marginTop: 20 }}>{error}</p>}
-
-        <div style={{ display: 'flex', gap: 12, marginTop: 28 }}>
-          <button className="btn btn-primary" type="submit" disabled={loading}>{loading ? 'กำลังบันทึก...' : 'สร้าง Listing'}</button>
-          <button className="btn" type="button" onClick={() => router.push('/host/dashboard')}>ยกเลิก</button>
-        </div>
+        <div style={{ display: 'flex', gap: 12, marginTop: 28 }}><button className="btn btn-primary" type="submit" disabled={loading}>{loading ? 'กำลังบันทึก...' : 'สร้าง Listing'}</button><button className="btn" type="button" onClick={() => router.push('/host/dashboard')}>ยกเลิก</button></div>
       </div>
     </form>
   );
