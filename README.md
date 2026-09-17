@@ -1,19 +1,23 @@
-# GepPao MVP v1.0
+# GepPao
 
-Brand: GepPao (เก็บเป๋า)
-Tagline: เก็บเป๋า... แล้วไปแฮงเอ้ากัน
+GepPao (เก็บเป๋า) is a Local Trip Intelligence Platform for turning traveler needs into a usable whole-trip plan. Pilot area: Pak Chong–Khao Yai.
 
 ## Stack
-Next.js + TypeScript + Supabase + server-side AI adapter.
+Next.js + TypeScript + Supabase + server-side planning adapter.
 
 ## Run
 1. `npm install`
-2. copy `.env.example` to `.env.local`
-3. set Supabase environment variables
+2. Copy `.env.example` to `.env.local`
+3. Set Supabase environment variables
 4. `npm run dev`
 
 ## Supabase
-Run `supabase/migrations/001_initial.sql` in Supabase SQL Editor.
+For a new environment, run repository migrations in order. See `docs/CURRENT_DATABASE_SCHEMA.md` and `docs/PHASE_08_DATABASE_MIGRATION.md` before changing production.
 
-## Important
-The AI endpoint is intentionally a safe mock adapter. Put real AI calls on the server and keep provider API keys out of client-side code. Replace `app/api/ai/trip/route.ts` with the selected provider implementation once the database and auth are connected.
+The live Supabase schema is the source of truth. Migrations are additive: preserve legacy `hosts`/`listings` until all runtime reads have migrated and passed regression tests.
+
+## Product rules
+- Use real stored Local Data only; never invent places, prices, hours, or events.
+- Filter hard constraints before preference ranking.
+- Business users submit content; Admin curation controls publication.
+- Keep secrets and service-role credentials out of client-side code.
