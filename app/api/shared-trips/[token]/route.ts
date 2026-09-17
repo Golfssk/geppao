@@ -1,0 +1,1 @@
+import {NextResponse} from 'next/server';import {createClient} from '@/lib/supabase/server';export async function GET(_:Request,{params}:{params:Promise<{token:string}>}){const{token}=await params,s=await createClient(),{data,error}=await s.rpc('get_shared_trip',{target_share_token:token});return error?NextResponse.json({error:error.message},{status:404}):NextResponse.json(data)}
