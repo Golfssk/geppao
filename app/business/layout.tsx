@@ -1,2 +1,1 @@
-import './business.css';
-export default function BusinessLayout({children}:{children:React.ReactNode}){return children}
+import Link from 'next/link';import './business.css';export default function BusinessLayout({children}:{children:React.ReactNode}){return <><div className="business-bar"><div className="container"><strong>Business Studio</strong><nav><Link href="/business/places">Places</Link><Link href="/business/places/new">เพิ่ม Place</Link><Link href="/business/events">Events</Link><Link href="/business/events/new">เพิ่ม Event</Link></nav></div></div>{children}</>}

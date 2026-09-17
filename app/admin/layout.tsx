@@ -1,1 +1,1 @@
-import './admin.css';export default function AdminLayout({children}:{children:React.ReactNode}){return children}
+import Link from 'next/link';import './admin.css';export default function AdminLayout({children}:{children:React.ReactNode}){return <><div className="admin-bar"><div className="container"><strong>GepPao Curation</strong><nav><Link href="/admin">Places</Link><Link href="/admin/events">Events</Link><Link href="/explore">Explore</Link></nav></div></div>{children}</>}
