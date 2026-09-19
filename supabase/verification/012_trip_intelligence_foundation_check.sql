@@ -58,3 +58,8 @@ select
 from pg_constraint
 where conrelid = 'public.route_segments'::regclass
 order by conname;
+
+-- This should return zero rows.
+select id, trip_day_id, from_item_id, to_item_id
+from public.route_segments
+where from_item_id = to_item_id;

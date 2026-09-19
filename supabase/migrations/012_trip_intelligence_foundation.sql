@@ -46,12 +46,36 @@ create table if not exists public.route_segments(
   unique (trip_day_id, from_item_id, to_item_id, travel_mode)
 );
 
--- Remove the older single-column foreign keys if this migration is re-applied to a
--- partially-created development database, then enforce same-day endpoints.
+-- Remove older single-column foreign keys and the old unnamed check if this migration
+-- is re-applied to a partially-created development database.
 alter table public.route_segments
   drop constraint if exists route_segments_from_item_id_fkey,
   drop constraint if exists route_segments_to_item_id_fkey,
   drop constraint if exists route_segments_check;
+
+-- CREATE TABLE IF NOT EXISTS does not add constraints to an existing table, so add
+-- the distinct-endpoint constraint explicitly for databases with a prior table.
+do $$
+begin
+  if not exists (
+    select 1
+    from pg_constraint
+    where conname = 'route_segments_distinct_items_check'
+      and conrelid = 'public.route_segments'::regclass
+  ) then
+    if exists (
+      select 1
+      from public.route_segments
+      where from_item_id = to_item_id
+    ) then
+      raise exception 'Cannot add route_segments_distinct_items_check: duplicate endpoints exist';
+    end if;
+
+    alter table public.route_segments
+      add constraint route_segments_distinct_items_check
+      check (from_item_id <> to_item_id);
+  end if;
+end $$;
 
 do $$
 begin
