@@ -122,6 +122,9 @@ export default async function Quality() {
     return summary;
   }, {});
   const readyCount = rows.filter((row) => row.ready).length;
+  const needsAttentionCount = rows.length - readyCount;
+  const readyPercent = rows.length ? Math.round((readyCount / rows.length) * 100) : 0;
+  const donutBackground = `conic-gradient(var(--sage) 0 ${readyPercent}%, var(--rust) ${readyPercent}% 100%)`;
 
   return (
     <main className="page">
@@ -129,11 +132,23 @@ export default async function Quality() {
         <p className="eyebrow">DATA QUALITY</p>
         <h1>Local Data completeness</h1>
         <p className="muted">ตรวจข้อมูลก่อนอนุมัติและก่อนนำเข้า Planner · Freshness threshold: {FRESHNESS_DAYS} วัน</p>
-        <section className="dashboard-card">
-          <h2>Pilot coverage</h2>
-          <p className="muted">{rows.length} รายการ · พร้อมใช้ {readyCount} · ต้องแก้ไข {rows.length - readyCount}</p>
-          <div className="form-grid">
-            {Object.entries(coverage).map(([key, count]) => <strong key={key}>{key}: {count}</strong>)}
+        <section className="dashboard-card quality-overview">
+          <div className="quality-donut" role="img" aria-label={`ข้อมูลพร้อมใช้ ${readyCount} จาก ${rows.length} รายการ หรือ ${readyPercent} เปอร์เซ็นต์`} style={{background: donutBackground}}>
+            <div className="quality-donut-center">
+              <strong>{readyPercent}%</strong>
+              <span>พร้อมใช้</span>
+            </div>
+          </div>
+          <div>
+            <h2>Pilot readiness</h2>
+            <p className="muted">ตรวจตามเกณฑ์ขั้นต่ำสำหรับ Whole-trip Planning</p>
+            <div className="quality-legend" aria-label="คำอธิบาย Donut Chart">
+              <span><i className="quality-dot quality-dot-ready" />พร้อมใช้ {readyCount}</span>
+              <span><i className="quality-dot quality-dot-attention" />ต้องแก้ไข {needsAttentionCount}</span>
+            </div>
+            <div className="form-grid quality-coverage">
+              {Object.entries(coverage).map(([key, count]) => <strong key={key}>{key}: {count}</strong>)}
+            </div>
           </div>
         </section>
         <div className="review-grid">
