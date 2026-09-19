@@ -1,6 +1,6 @@
 # Phase 18 — Consolidated Accommodation Data Pack 001
 
-**Status:** Ready for one-time Supabase import
+**Status:** Awaiting duplicate preflight resolution
 **Checked:** 2026-09-19 (Asia/Bangkok)
 **Scope:** 20 direct-operator-source accommodation Places for the Pak Chong–Khao Yai pilot.
 
@@ -46,10 +46,10 @@ This replaces the unexecuted, smaller Batch 008 import workflow. The pack lets t
 
 The Paz Khao Yai is excluded even though its historical contact page is available: its own website announces a temporary closure from 1 March 2025. It must not be added as an active accommodation candidate without a current reopening confirmation. https://www.thepazkhaoyai.com/
 
-## One-time run order
+## Run order
 
-1. Run `supabase/seed/phase_18_consolidated_accommodation_pack_001.sql`.
-2. If it returns `Success`, run `supabase/seed/phase_18_consolidated_accommodation_pack_001_verify.sql`.
-3. Send the full verification output in the project chat.
+1. If the import reports a duplicate error, first run `supabase/seed/phase_18_consolidated_accommodation_pack_001_preflight.sql` (read-only) and share its output.
+2. After duplicate reconciliation, run `supabase/seed/phase_18_consolidated_accommodation_pack_001.sql`.
+3. If it returns `Success`, run `supabase/seed/phase_18_consolidated_accommodation_pack_001_verify.sql`.
 
-Expected result: 20 `PASS` rows and summary `place_count = 20`, `status = PASS`.
+Expected successful result: 20 `PASS` rows and summary `place_count = 20`, `status = PASS`.
