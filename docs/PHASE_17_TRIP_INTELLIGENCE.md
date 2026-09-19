@@ -28,3 +28,13 @@ Start with transparent Haversine estimates when coordinates exist. Mark them `es
 - Closed dates and impossible Event schedules produce conflicts.
 - Locked Trip Items are never removed by recalculation.
 - Estimated route and price values remain visibly labeled.
+- Route segment endpoints must belong to the same Trip Day.
+- Zero distance and zero travel time are valid values for same-location or unavailable-duration estimates; they must not be rejected by the database.
+
+## Database Gate
+1. Back up the production database using the project's manual logical snapshot process.
+2. Run `supabase/migrations/012_trip_intelligence_foundation.sql` in Supabase SQL Editor.
+3. Run `supabase/verification/012_trip_intelligence_foundation_check.sql`.
+4. Confirm the expected tables, columns, policies, constraints, and summary function before application code is enabled.
+
+The migration is additive and preserves Legacy tables and existing Trip records. No application Calculation Engine should be merged before the user confirms this gate passed.
