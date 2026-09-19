@@ -1,1 +1,197 @@
-'use client';import {useMemo,useState} from 'react';import {useRouter} from 'next/navigation';const target=(x:any)=>{const e=x.places||x.events;if(!e)return null;if(e.latitude!=null&&e.longitude!=null)return `${e.latitude},${e.longitude}`;return e.address||e.temporary_venue_name||e.name};const directions=(targets:string[])=>{const stops=targets.filter(Boolean).slice(0,9);if(!stops.length)return '#';const p=new URLSearchParams({api:'1',travelmode:'driving',destination:stops.at(-1)!});if(stops.length>1)p.set('waypoints',stops.slice(0,-1).join('|'));return 'https://www.google.com/maps/dir/?'+p.toString()};export function TripWorkspace({trip,candidates}:{trip:any;candidates:any[]}){const router=useRouter(),[message,setMessage]=useState(''),[selected,setSelected]=useState(candidates[0]?.key??''),[dayId,setDayId]=useState(trip.trip_days?.[0]?.id??'');const items=(trip.trip_days??[]).flatMap((d:any)=>d.trip_items??[]),spent=useMemo(()=>items.reduce((n:number,x:any)=>n+Number(x.estimated_cost||0),0),[items]);async function item(method:string,body:any){const r=await fetch(`/api/trips/${trip.id}/items`,{method,headers:{'Content-Type':'application/json'},body:JSON.stringify(body)}),x=await r.json();setMessage(r.ok?'บันทึกแล้ว':x.error??'ไม่สำเร็จ');if(r.ok)router.refresh()}async function add(){const c=candidates.find(x=>x.key===selected);if(!c||!dayId)return;await item('POST',{tripDayId:dayId,placeId:c.kind==='place'?c.id:null,eventId:c.kind==='event'?c.id:null,position:99,estimatedCost:c.cost,reason:'เลือกจาก Published Local Data'})}async function share(){const r=await fetch(`/api/trips/${trip.id}/share`,{method:'POST'}),x=await r.json();if(r.ok){await navigator.clipboard.writeText(`${location.origin}${x.url}`);setMessage('คัดลอกลิงก์แชร์แล้ว')}else setMessage(x.error)}return <div className="editor-stack"><section className="dashboard-card"><div className="section-head"><div><h2>งบทริป</h2><p className="muted">ประมาณการจากรายการที่เพิ่มแล้ว</p></div><strong>{spent.toLocaleString()} / {Number(trip.budget_total||0).toLocaleString()} {trip.currency}</strong></div><button className="btn" onClick={share}>แชร์แบบอ่านอย่างเดียว</button></section><section className="dashboard-card"><h2>เพิ่มจาก Local Data</h2><div className="form-grid"><select value={dayId} onChange={e=>setDayId(e.target.value)}>{(trip.trip_days??[]).map((d:any)=><option value={d.id} key={d.id}>Day {d.day_number} · {d.service_date}</option>)}</select><select value={selected} onChange={e=>setSelected(e.target.value)}>{candidates.map(c=><option value={c.key} key={c.key}>{c.type} · {c.name} · {c.cost} THB</option>)}</select></div><button className="btn btn-primary" onClick={add}>เพิ่มเข้าทริป</button></section>{(trip.trip_days??[]).map((d:any)=>{const dayItems=(d.trip_items??[]).sort((a:any,b:any)=>a.position-b.position),route=dayItems.map(target).filter(Boolean) as string[];return <section className="dashboard-card" key={d.id}><div className="section-head"><div><h2>Day {d.day_number} · {d.service_date}</h2><p className="muted">เรียงจุดหมายตามลำดับด้านล่าง</p></div>{route.length>0&&<a className="btn btn-rust" href={directions(route)} target="_blank" rel="noreferrer">เริ่มเดินทางวันนี้ ↗</a>}</div>{dayItems.map((x:any,index:number)=>{const destination=target(x);return <article className="trip-item" key={x.id}><div><strong>{x.places?.name||x.events?.name}</strong><p className="muted">{x.places?.place_type||'event'} · {Number(x.estimated_cost||0).toLocaleString()} {x.currency}</p><p>{x.recommendation_reason}</p>{destination&&<a className="btn btn-sage" href={directions([destination])} target="_blank" rel="noreferrer">นำทางไปจุดนี้ ↗</a>}</div><div className="form-actions"><button className="btn" disabled={index===0} onClick={()=>item('PATCH',{itemId:x.id,position:x.position-1})}>↑</button><button className="btn" onClick={()=>item('PATCH',{itemId:x.id,position:x.position+1})}>↓</button><button className="btn" onClick={()=>item('PATCH',{itemId:x.id,isLocked:!x.is_locked})}>{x.is_locked?'ปลดล็อก':'ล็อก'}</button><button className="btn" onClick={()=>item('DELETE',{itemId:x.id})}>ลบ</button></div></article>})}{route.length>9&&<p className="muted">Google Maps รองรับเส้นทางชุดนี้สูงสุด 9 จุด ระบบจะแบ่งเส้นทางเพิ่มเติมในรุ่นถัดไป</p>}</section>})}{message&&<p className="setup-notice">{message}</p>}</div>}
+'use client';
+
+import {useMemo, useState} from 'react';
+import {useRouter} from 'next/navigation';
+
+const target = (item: any) => {
+  const destination = item.places || item.events;
+  if (!destination) return null;
+  if (destination.latitude != null && destination.longitude != null) {
+    return `${destination.latitude},${destination.longitude}`;
+  }
+  return destination.address || destination.temporary_venue_name || destination.name;
+};
+
+const directions = (targets: string[]) => {
+  const stops = targets.filter(Boolean).slice(0, 9);
+  if (!stops.length) return '#';
+  const params = new URLSearchParams({
+    api: '1',
+    travelmode: 'driving',
+    destination: stops.at(-1)!,
+  });
+  if (stops.length > 1) params.set('waypoints', stops.slice(0, -1).join('|'));
+  return `https://www.google.com/maps/dir/?${params.toString()}`;
+};
+
+const statusLabel = (status: string | null | undefined) => {
+  if (status === 'conflict') return 'มี Conflict';
+  if (status === 'warning') return 'มี Warning';
+  if (status === 'valid') return 'ผ่านการตรวจ';
+  return 'ยังไม่ได้คำนวณ';
+};
+
+export function TripWorkspace({trip, candidates}: {trip: any; candidates: any[]}) {
+  const router = useRouter();
+  const [message, setMessage] = useState('');
+  const [selected, setSelected] = useState(candidates[0]?.key ?? '');
+  const [dayId, setDayId] = useState(trip.trip_days?.[0]?.id ?? '');
+  const [calculating, setCalculating] = useState(false);
+  const items = (trip.trip_days ?? []).flatMap((day: any) => day.trip_items ?? []);
+  const spent = useMemo(
+    () => items.reduce((total: number, item: any) => total + Number(item.estimated_cost || 0), 0),
+    [items],
+  );
+
+  async function item(method: string, body: any) {
+    const response = await fetch(`/api/trips/${trip.id}/items`, {
+      method,
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify(body),
+    });
+    const result = await response.json();
+    setMessage(response.ok ? 'บันทึกแล้ว' : result.error ?? 'ไม่สำเร็จ');
+    if (response.ok) router.refresh();
+  }
+
+  async function add() {
+    const candidate = candidates.find((value) => value.key === selected);
+    if (!candidate || !dayId) return;
+    await item('POST', {
+      tripDayId: dayId,
+      placeId: candidate.kind === 'place' ? candidate.id : null,
+      eventId: candidate.kind === 'event' ? candidate.id : null,
+      position: 99,
+      estimatedCost: candidate.cost,
+      reason: 'เลือกจาก Published Local Data',
+    });
+  }
+
+  async function recalculate() {
+    setCalculating(true);
+    setMessage('กำลังคำนวณเวลา เส้นทาง และงบประมาณ...');
+    const response = await fetch(`/api/trips/${trip.id}/recalculate`, {method: 'POST'});
+    const result = await response.json();
+    setCalculating(false);
+    if (!response.ok) {
+      setMessage(result.error ?? 'คำนวณ Trip ไม่สำเร็จ');
+      return;
+    }
+    setMessage('คำนวณ Trip แล้ว');
+    router.refresh();
+  }
+
+  async function share() {
+    const response = await fetch(`/api/trips/${trip.id}/share`, {method: 'POST'});
+    const result = await response.json();
+    if (response.ok) {
+      await navigator.clipboard.writeText(`${location.origin}${result.url}`);
+      setMessage('คัดลอกลิงก์แชร์แล้ว');
+    } else {
+      setMessage(result.error ?? 'แชร์ Trip ไม่สำเร็จ');
+    }
+  }
+
+  return (
+    <div className="editor-stack">
+      <section className="dashboard-card">
+        <div className="section-head">
+          <div>
+            <h2>Trip Intelligence</h2>
+            <p className="muted">คำนวณจากข้อมูล Published จริงเท่านั้น และระบุ Estimate อย่างชัดเจน</p>
+          </div>
+          <button className="btn btn-primary" onClick={recalculate} disabled={calculating}>
+            {calculating ? 'กำลังคำนวณ...' : 'คำนวณ Trip ใหม่'}
+          </button>
+        </div>
+        <p className="muted">การคำนวณจะไม่ลบหรือจัดลำดับ Trip Items และจะรักษา Locked Items ไว้</p>
+      </section>
+
+      <section className="dashboard-card">
+        <div className="section-head">
+          <div>
+            <h2>งบทริป</h2>
+            <p className="muted">ยอดรวมปัจจุบันจากรายการที่บันทึกไว้</p>
+          </div>
+          <strong>{spent.toLocaleString()} / {Number(trip.budget_total || 0).toLocaleString()} {trip.currency}</strong>
+        </div>
+        <button className="btn" onClick={share}>แชร์แบบอ่านอย่างเดียว</button>
+      </section>
+
+      <section className="dashboard-card">
+        <h2>เพิ่มจาก Local Data</h2>
+        <div className="form-grid">
+          <select value={dayId} onChange={(event) => setDayId(event.target.value)}>
+            {(trip.trip_days ?? []).map((day: any) => (
+              <option value={day.id} key={day.id}>Day {day.day_number} · {day.service_date}</option>
+            ))}
+          </select>
+          <select value={selected} onChange={(event) => setSelected(event.target.value)}>
+            {candidates.map((candidate) => (
+              <option value={candidate.key} key={candidate.key}>
+                {candidate.type} · {candidate.name} · {candidate.cost} THB
+              </option>
+            ))}
+          </select>
+        </div>
+        <button className="btn btn-primary" onClick={add}>เพิ่มเข้าทริป</button>
+      </section>
+
+      {(trip.trip_days ?? []).map((day: any) => {
+        const dayItems = [...(day.trip_items ?? [])].sort((a: any, b: any) => a.position - b.position);
+        const route = dayItems.map(target).filter(Boolean) as string[];
+        return (
+          <section className="dashboard-card" key={day.id}>
+            <div className="section-head">
+              <div>
+                <h2>Day {day.day_number} · {day.service_date}</h2>
+                <p className="muted">สถานะ: {statusLabel(day.validation_status)}</p>
+              </div>
+              {route.length > 0 && (
+                <a className="btn btn-rust" href={directions(route)} target="_blank" rel="noreferrer">
+                  เริ่มเดินทางวันนี้ ↗
+                </a>
+              )}
+            </div>
+            <div className="form-grid">
+              <p className="muted">งบประมาณคำนวณแล้ว: {Number(day.estimated_total_cost || 0).toLocaleString()} {trip.currency}</p>
+              <p className="muted">เส้นทางประมาณการ: {Number(day.estimated_travel_km || 0).toFixed(2)} km · {Number(day.estimated_travel_minutes || 0)} นาที</p>
+            </div>
+            {dayItems.map((itemValue: any, index: number) => {
+              const destination = target(itemValue);
+              const messages = Array.isArray(itemValue.validation_messages) ? itemValue.validation_messages : [];
+              return (
+                <article className="trip-item" key={itemValue.id}>
+                  <div>
+                    <strong>{itemValue.places?.name || itemValue.events?.name || 'ข้อมูลสถานที่ไม่พร้อมใช้งาน'}</strong>
+                    <p className="muted">
+                      {itemValue.places?.place_type || 'event'} · {itemValue.validation_status || 'pending'} · {Number(itemValue.estimated_cost || 0).toLocaleString()} {itemValue.currency}
+                    </p>
+                    <p>{itemValue.recommendation_reason}</p>
+                    {itemValue.travel_distance_km != null && (
+                      <p className="muted">Route estimate: {Number(itemValue.travel_distance_km).toFixed(2)} km · {Number(itemValue.travel_duration_minutes || 0)} นาที</p>
+                    )}
+                    {messages.map((message: any, messageIndex: number) => (
+                      <p className="muted" key={`${itemValue.id}-${messageIndex}`}>{message.severity === 'conflict' ? 'Conflict' : 'Warning'}: {message.message}</p>
+                    ))}
+                    {destination && (
+                      <a className="btn btn-sage" href={directions([destination])} target="_blank" rel="noreferrer">นำทางไปจุดนี้ ↗</a>
+                    )}
+                  </div>
+                  <div className="form-actions">
+                    <button className="btn" disabled={index === 0} onClick={() => item('PATCH', {itemId: itemValue.id, position: itemValue.position - 1})}>↑</button>
+                    <button className="btn" onClick={() => item('PATCH', {itemId: itemValue.id, position: itemValue.position + 1})}>↓</button>
+                    <button className="btn" onClick={() => item('PATCH', {itemId: itemValue.id, isLocked: !itemValue.is_locked})}>{itemValue.is_locked ? 'ปลดล็อก' : 'ล็อก'}</button>
+                    <button className="btn" onClick={() => item('DELETE', {itemId: itemValue.id})}>ลบ</button>
+                  </div>
+                </article>
+              );
+            })}
+            {route.length > 9 && <p className="muted">Google Maps รองรับเส้นทางชุดนี้สูงสุด 9 จุด ระบบจะแบ่งเส้นทางเพิ่มเติมในรุ่นถัดไป</p>}
+          </section>
+        );
+      })}
+      {message && <p className="setup-notice">{message}</p>}
+    </div>
+  );
+}
