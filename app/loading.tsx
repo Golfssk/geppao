@@ -1,0 +1,1 @@
+export default function Loading(){return <main className="page"><div className="container section"><p className="eyebrow">GEPPPAO</p><h1>กำลังโหลดข้อมูล...</h1><p className="muted">กำลังตรวจ Place, Event และข้อมูลทริปที่คุณมีสิทธิ์เข้าถึง</p></div></main>}
