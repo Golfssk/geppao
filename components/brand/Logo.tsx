@@ -1,7 +1,1 @@
-export function Logo({ size = 34 }: { size?: number }) {
-  return <svg width={size} height={size} viewBox="0 0 34 34" fill="none" aria-label="GepPao logo" role="img">
-    <path d="M8 14Q8 10 12 10H22Q26 10 26 14V26Q26 30 22 30H12Q8 30 8 26V14" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round"/>
-    <path d="M12 10Q17 4 22 10" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round"/>
-    <circle cx="17" cy="20" r="1.6" fill="#ACC8A2"/>
-  </svg>
-}
+export function Logo({size=34}:{size?:number}){return <svg width={size} height={size} viewBox="0 0 40 40" aria-label="GepPao logo mark" role="img"><circle cx="20" cy="20" r="19" fill="#1E3A29"/><text x="18.5" y="28" textAnchor="middle" fill="#fff" fontFamily="Google Sans,Arial,sans-serif" fontSize="29" fontWeight="500">g</text><circle cx="25.5" cy="20.5" r="2.4" fill="#B3592C"/></svg>}
