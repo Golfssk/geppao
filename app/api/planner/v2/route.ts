@@ -56,7 +56,7 @@ export async function POST(request:Request){
 
   const [{data:places,error:placeError},{data:events,error:eventError}]=await Promise.all([
     supabase.from('places').select('id,name,slug,description,place_type,address,latitude,longitude,max_group_size,pet_friendly,child_friendly,recommended_duration_minutes,place_hours(day_of_week,open_time,close_time,is_closed),price_items(label,amount_min,amount_max,currency,price_unit,is_estimate)').eq('publication_status','published'),
-    supabase.from('events').select('id,name,slug,description,address,temporary_venue_name,event_schedules(starts_at,ends_at,status),price_items(label,amount_min,amount_max,currency,price_unit,is_estimate)').eq('publication_status','published')
+    supabase.from('events').select('id,name,slug,description,address,temporary_venue_name,latitude,longitude,event_schedules(starts_at,ends_at,status),price_items(label,amount_min,amount_max,currency,price_unit,is_estimate)').eq('publication_status','published')
   ]);
   if(placeError)return NextResponse.json({error:placeError.message},{status:500});
   if(eventError)return NextResponse.json({error:eventError.message},{status:500});
