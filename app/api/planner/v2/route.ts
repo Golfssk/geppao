@@ -6,6 +6,8 @@ type Price = {cost:number|null; status:PriceStatus; unit:string|null};
 type Coord = {latitude:number; longitude:number};
 
 const number=(value:string, pattern:RegExp)=>{const m=value.match(pattern);return m?Number(m[1].replace(/,/g,'')):undefined;};
+const hasText=(value:unknown)=>typeof value==='string'&&value.trim().length>0;
+const hasCoordinate=(value:unknown)=>Number.isFinite(Number(value));
 
 function parseRequest(text:string,startDate?:string,endDate?:string){
   const travelers=number(text,/(?:ไป|กับ|สำหรับ|ทั้งหมด)?\s*(\d+)\s*(?:คน|ท่าน)/i)||2;
@@ -46,6 +48,46 @@ function keywordScore(text:string, type:string, place:any){
   return (rules[type]||[]).filter(k=>text.toLowerCase().includes(k)&&hay.includes(k)).length*2;
 }
 
+function hasUsableHours(place:any){
+  return (place.place_hours??[]).some((hours:any)=>hours.is_closed!==true&&hasText(hours.open_time)&&hasText(hours.close_time));
+}
+function hasUsablePrice(place:any){
+  return (place.price_items??[]).some((price:any)=>price.amount_min!=null&&Number.isFinite(Number(price.amount_min)));
+}
+function isPlannerReadyPlace(place:any){
+  const needsHours=['restaurant','cafe','attraction','activity'].includes(place.place_type);
+  return hasCoordinate(place.latitude)
+    && hasCoordinate(place.longitude)
+    && hasText(place.description)
+    && Number.isFinite(Number(place.recommended_duration_minutes))
+    && Number(place.recommended_duration_minutes)>0
+    && hasUsablePrice(place)
+    && (!needsHours||hasUsableHours(place));
+}
+function isPlannerReadyEvent(event:any, req:{startDate?:string;endDate?:string}){
+  return hasCoordinate(event.latitude)
+    && hasCoordinate(event.longitude)
+    && hasText(event.description)
+    && event.event_schedules?.some((schedule:any)=>schedule.status==='scheduled'
+      && hasText(schedule.starts_at)
+      && (!req.startDate||schedule.starts_at>=req.startDate)
+      && (!req.endDate||schedule.starts_at<=req.endDate+'T23:59:59+07:00'));
+}
+function plannerReadinessSummary(places:any[], eligible:any[]){
+  return {
+    publishedPlaces:places.length,
+    requestEligiblePlaces:eligible.length,
+    plannerReadyPlaces:eligible.filter(isPlannerReadyPlace).length,
+    excluded:{
+      missingCoordinates:eligible.filter((p:any)=>!hasCoordinate(p.latitude)||!hasCoordinate(p.longitude)).length,
+      missingDescription:eligible.filter((p:any)=>!hasText(p.description)).length,
+      missingDuration:eligible.filter((p:any)=>!Number.isFinite(Number(p.recommended_duration_minutes))||Number(p.recommended_duration_minutes)<=0).length,
+      missingPrice:eligible.filter((p:any)=>!hasUsablePrice(p)).length,
+      missingHours:eligible.filter((p:any)=>['restaurant','cafe','attraction','activity'].includes(p.place_type)&&!hasUsableHours(p)).length,
+    }
+  };
+}
+
 export async function POST(request:Request){
   let body:any;
   try{body=await request.json();}catch{return NextResponse.json({error:'Invalid JSON body'},{status:400});}
@@ -61,14 +103,24 @@ export async function POST(request:Request){
   if(placeError)return NextResponse.json({error:placeError.message},{status:500});
   if(eventError)return NextResponse.json({error:eventError.message},{status:500});
 
-  const eligible=(places??[]).filter((p:any)=>{
+  const publishedPlaces=places??[];
+  const eligible=publishedPlaces.filter((p:any)=>{
     if(p.max_group_size!=null&&Number(p.max_group_size)<req.travelers)return false;
     if(req.pet&&p.pet_friendly===false)return false;
     if(req.family&&p.child_friendly===false)return false;
     return true;
   });
+  const readiness=plannerReadinessSummary(publishedPlaces,eligible);
+  const plannerReady=eligible.filter(isPlannerReadyPlace);
+  if(!plannerReady.length){
+    return NextResponse.json({
+      error:'ยังไม่มีสถานที่ที่มีข้อมูลพร้อมสำหรับสร้างแผนทริปอย่างน่าเชื่อถือ',
+      dataReadiness:readiness,
+      nextStep:'เพิ่มพิกัด รายละเอียด ระยะเวลาที่แนะนำ ราคา และเวลาเปิด–ปิดให้กับสถานที่อย่างน้อยหนึ่งชุดต่อหมวดหมู่'
+    },{status:422});
+  }
 
-  const mapped=eligible.map((p:any)=>{
+  const mapped=plannerReady.map((p:any)=>{
     const price=priceOf(p.price_items??[]);
     const estimatedCost=estimateCost(price,req.travelers,req.nights,p.place_type);
     let score=keywordScore(text,p.place_type,p);
@@ -81,8 +133,8 @@ export async function POST(request:Request){
       req.pet&&p.pet_friendly===true?'รองรับสัตว์เลี้ยง':'',
       req.family&&p.child_friendly===true?'เหมาะกับครอบครัว':'',
       keywordScore(text,p.place_type,p)>0?'ตรงกับความสนใจของทริป':'',
-      price.cost!=null?'มีข้อมูลราคา':'',
-    ].filter(Boolean).join(' · ')||'ตรงกับข้อมูลพื้นฐานของทริป'};
+      'ผ่านเกณฑ์ข้อมูลพร้อมใช้สำหรับ Planner',
+    ].filter(Boolean).join(' · ')};
   });
 
   const budget=req.budgetTotal;
@@ -109,9 +161,9 @@ export async function POST(request:Request){
     chooseWithinBudget(candidates);
   }
 
-  const eventItems=(events??[]).filter((e:any)=>e.event_schedules?.some((s:any)=>s.status==='scheduled'&&(!req.startDate||s.starts_at>=req.startDate)&&(!req.endDate||s.starts_at<=req.endDate+'T23:59:59+07:00'))).map((e:any)=>{
+  const eventItems=(events??[]).filter((event:any)=>isPlannerReadyEvent(event,req)).map((e:any)=>{
     const price=priceOf(e.price_items??[]);
-    return {kind:'event',id:e.id,name:e.name,slug:e.slug,type:'event',location:e.temporary_venue_name||e.address,latitude:e.latitude,longitude:e.longitude,cost:estimateCost(price,req.travelers,req.nights,'event'),unit:price.unit,priceStatus:price.status,duration:null,score:2,reason:'Event ที่เผยแพร่และมีรอบตรงกับช่วงเดินทาง'};
+    return {kind:'event',id:e.id,name:e.name,slug:e.slug,type:'event',location:e.temporary_venue_name||e.address,latitude:e.latitude,longitude:e.longitude,cost:estimateCost(price,req.travelers,req.nights,'event'),unit:price.unit,priceStatus:price.status,duration:null,score:2,reason:'Event ที่เผยแพร่ มีข้อมูลสถานที่ และมีรอบตรงกับช่วงเดินทาง'};
   });
   chooseWithinBudget(eventItems);
 
@@ -154,11 +206,10 @@ export async function POST(request:Request){
   const missingPrice=selected.filter(x=>x.cost==null).length;
 
   return NextResponse.json({plan:{
-    input:text,travelers:req.travelers,budget:budget??null,budgetPerPerson:req.budgetPerPerson??null,startDate:req.startDate||null,endDate:req.endDate||null,nights:req.nights,totalEstimatedCost:total,budgetFit,costCoverage:missingPrice===0?'complete':total>0?'partial':'missing',items:selected,itinerary,days:routeDays,routeKm:routeDays.reduce((s,d)=>s+d.estimatedTravelKm,0),routeMinutes:routeDays.reduce((s,d)=>s+d.estimatedTravelMinutes,0),
+    input:text,travelers:req.travelers,budget:budget??null,budgetPerPerson:req.budgetPerPerson??null,startDate:req.startDate||null,endDate:req.endDate||null,nights:req.nights,totalEstimatedCost:total,budgetFit,costCoverage:missingPrice===0?'complete':total>0?'partial':'missing',items:selected,itinerary,days:routeDays,routeKm:routeDays.reduce((s,d)=>s+d.estimatedTravelKm,0),routeMinutes:routeDays.reduce((s,d)=>s+d.estimatedTravelMinutes,0),dataReadiness:readiness,
     limitations:[
-      'การจัดลำดับนี้ใช้ข้อมูล Published จริงจาก GepPao',
+      'การจัดลำดับนี้เลือกเฉพาะสถานที่ Published ที่ผ่านเกณฑ์ข้อมูลพร้อมใช้ของ GepPao',
       'เส้นทางเป็น Estimate จากพิกัดและความเร็วเฉลี่ย 35 km/h; ยังไม่ใช่เวลา Google Maps แบบ real-time',
-      missingPrice?'บางรายการยังไม่มีราคาที่ใช้คำนวณได้':'',
       budgetFit===false?'ยอดประมาณการเกินงบที่ระบุ จึงควรปรับจำนวนกิจกรรม/ตัวเลือก':'',
       'ควรตรวจสอบราคา เวลาเปิด–ปิด และรอบ Event ก่อนเดินทาง'
     ].filter(Boolean)
