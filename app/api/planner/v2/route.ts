@@ -7,7 +7,7 @@ type Coord = {latitude:number; longitude:number};
 
 const number=(value:string, pattern:RegExp)=>{const m=value.match(pattern);return m?Number(m[1].replace(/,/g,'')):undefined;};
 const hasText=(value:unknown)=>typeof value==='string'&&value.trim().length>0;
-const hasCoordinate=(value:unknown)=>Number.isFinite(Number(value));
+const hasCoordinate=(value:unknown)=>value!==null&&value!==undefined&&value!==''&&Number.isFinite(Number(value));
 
 function parseRequest(text:string,startDate?:string,endDate?:string){
   const travelers=number(text,/(?:ไป|กับ|สำหรับ|ทั้งหมด)?\s*(\d+)\s*(?:คน|ท่าน)/i)||2;
@@ -112,15 +112,24 @@ export async function POST(request:Request){
   });
   const readiness=plannerReadinessSummary(publishedPlaces,eligible);
   const plannerReady=eligible.filter(isPlannerReadyPlace);
-  if(!plannerReady.length){
+  // Prefer fully verified records, but provide a transparent partial plan when
+  // owners have supplied enough routing information to make a useful draft.
+  const partialReady=eligible.filter((p:any)=>hasCoordinate(p.latitude)
+    && hasCoordinate(p.longitude)
+    && hasText(p.description)
+    && Number.isFinite(Number(p.recommended_duration_minutes))
+    && Number(p.recommended_duration_minutes)>0);
+  const candidatePool=plannerReady.length?plannerReady:partialReady;
+  const usingPartialData=!plannerReady.length;
+  if(!candidatePool.length){
     return NextResponse.json({
-      error:'ยังไม่มีสถานที่ที่มีข้อมูลพร้อมสำหรับสร้างแผนทริปอย่างน่าเชื่อถือ',
+      error:'ยังไม่มีสถานที่ที่มีพิกัด รายละเอียด และระยะเวลาพอสำหรับสร้างแผนทริป',
       dataReadiness:readiness,
-      nextStep:'เพิ่มพิกัด รายละเอียด ระยะเวลาที่แนะนำ ราคา และเวลาเปิด–ปิดให้กับสถานที่อย่างน้อยหนึ่งชุดต่อหมวดหมู่'
+      nextStep:'เพิ่มพิกัด รายละเอียด และระยะเวลาที่แนะนำให้กับสถานที่อย่างน้อยหนึ่งรายการ'
     },{status:422});
   }
 
-  const mapped=plannerReady.map((p:any)=>{
+  const mapped=candidatePool.map((p:any)=>{
     const price=priceOf(p.price_items??[]);
     const estimatedCost=estimateCost(price,req.travelers,req.nights,p.place_type);
     let score=keywordScore(text,p.place_type,p);
@@ -133,7 +142,7 @@ export async function POST(request:Request){
       req.pet&&p.pet_friendly===true?'รองรับสัตว์เลี้ยง':'',
       req.family&&p.child_friendly===true?'เหมาะกับครอบครัว':'',
       keywordScore(text,p.place_type,p)>0?'ตรงกับความสนใจของทริป':'',
-      'ผ่านเกณฑ์ข้อมูลพร้อมใช้สำหรับ Planner',
+      usingPartialData?'ใช้ข้อมูลบางส่วน — ควรตรวจสอบราคาและเวลาเปิด–ปิด':'ผ่านเกณฑ์ข้อมูลพร้อมใช้สำหรับ Planner',
     ].filter(Boolean).join(' · ')};
   });
 
@@ -167,8 +176,6 @@ export async function POST(request:Request){
   });
   chooseWithinBudget(eventItems);
 
-  // Fill remaining itinerary capacity with high-scoring candidates, while respecting
-  // the daily time budget and avoiding duplicate places.
   const remaining=mapped.filter(x=>!selected.some(s=>s.id===x.id)).sort((a,b)=>b.score-a.score);
   for(const candidate of remaining){
     if(selected.length>=1+dayCount*2) break;
@@ -183,7 +190,6 @@ export async function POST(request:Request){
   const nonStay=selected.filter(x=>x.type!=='accommodation');
   const days:any[]=Array.from({length:dayCount},(_,i)=>({day:i+1,items:[]}));
   if(accommodationItem) days[0].items.push({...accommodationItem,role:'stay'});
-  // Build a route-aware sequence: each next stop is the closest remaining candidate.
   let anchor=accommodationItem ?? null;
   const remainingVisits=[...nonStay];
   while(remainingVisits.length){
@@ -208,7 +214,7 @@ export async function POST(request:Request){
   return NextResponse.json({plan:{
     input:text,travelers:req.travelers,budget:budget??null,budgetPerPerson:req.budgetPerPerson??null,startDate:req.startDate||null,endDate:req.endDate||null,nights:req.nights,totalEstimatedCost:total,budgetFit,costCoverage:missingPrice===0?'complete':total>0?'partial':'missing',items:selected,itinerary,days:routeDays,routeKm:routeDays.reduce((s,d)=>s+d.estimatedTravelKm,0),routeMinutes:routeDays.reduce((s,d)=>s+d.estimatedTravelMinutes,0),dataReadiness:readiness,
     limitations:[
-      'การจัดลำดับนี้เลือกเฉพาะสถานที่ Published ที่ผ่านเกณฑ์ข้อมูลพร้อมใช้ของ GepPao',
+      usingPartialData?'แผนนี้ใช้ข้อมูล Published ที่ยังไม่ครบทุกฟิลด์ จึงแสดงราคา/เวลาเปิด–ปิดที่ขาดอย่างโปร่งใส':'การจัดลำดับนี้เลือกเฉพาะสถานที่ Published ที่ผ่านเกณฑ์ข้อมูลพร้อมใช้ของ GepPao',
       'เส้นทางเป็น Estimate จากพิกัดและความเร็วเฉลี่ย 35 km/h; ยังไม่ใช่เวลา Google Maps แบบ real-time',
       budgetFit===false?'ยอดประมาณการเกินงบที่ระบุ จึงควรปรับจำนวนกิจกรรม/ตัวเลือก':'',
       'ควรตรวจสอบราคา เวลาเปิด–ปิด และรอบ Event ก่อนเดินทาง'
