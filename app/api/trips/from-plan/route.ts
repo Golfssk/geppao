@@ -4,25 +4,39 @@ import {createClient} from '@/lib/supabase/server';
 const toIso = (serviceDate:string | null, time:string | null) =>
   serviceDate && time ? `${serviceDate}T${time}:00+07:00` : null;
 
-const dateForDay = (startDate:string | null, dayNumber:number) => {
-  if (!startDate) return null;
-  const date = new Date(`${startDate}T00:00:00+07:00`);
-  date.setDate(date.getDate() + dayNumber - 1);
-  return date.toLocaleDateString('en-CA', {timeZone:'Asia/Bangkok'});
-};
-
 export async function POST(request: Request) {
   const supabase = await createClient();
   const {data: auth} = await supabase.auth.getUser();
   if (!auth.user) return NextResponse.json({error: 'กรุณาเข้าสู่ระบบก่อนบันทึกทริป'}, {status: 401});
 
-  const {title, plan} = await request.json();
-  if (!plan) return NextResponse.json({error: 'ไม่พบข้อมูล Plan'}, {status: 400});
+  let payload: {title?: string; plan?: any};
+  try {
+    payload = await request.json();
+  } catch {
+    return NextResponse.json({error: 'ข้อมูล Plan ไม่ถูกต้อง'}, {status: 400});
+  }
+
+  const {title, plan} = payload;
+  if (!plan || !Array.isArray(plan.days) || !plan.days.length) {
+    return NextResponse.json({error: 'ไม่พบกำหนดการรายวันจาก Planner'}, {status: 400});
+  }
+
+  const startDate = typeof plan.startDate === 'string' ? plan.startDate : null;
+  const endDate = typeof plan.endDate === 'string' ? plan.endDate : null;
+  const validDate = (value: string | null) => Boolean(value && /^\d{4}-\d{2}-\d{2}$/.test(value) && !Number.isNaN(Date.parse(`${value}T00:00:00Z`)));
+  if (!validDate(startDate) || !validDate(endDate)) {
+    return NextResponse.json({error: 'โปรดเลือกวันเริ่มและวันสิ้นสุดก่อนบันทึกทริป เพื่อสร้างกำหนดการและตรวจสอบเวลาได้ถูกต้อง'}, {status: 400});
+  }
+
+  const plannedDays = Math.floor((Date.parse(`${endDate}T00:00:00Z`) - Date.parse(`${startDate}T00:00:00Z`)) / 86400000) + 1;
+  if (plannedDays < 1 || plan.days.length !== plannedDays) {
+    return NextResponse.json({error: 'จำนวนวันในแผนไม่ตรงกับช่วงวันที่เลือก กรุณาสร้างแผนใหม่ก่อนบันทึก'}, {status: 400});
+  }
 
   const {data: tripId, error} = await supabase.rpc('create_trip_with_days', {
     trip_title: title || 'ทริปจาก GepPao Planner',
-    trip_start_date: plan.startDate || null,
-    trip_end_date: plan.endDate || null,
+    trip_start_date: startDate,
+    trip_end_date: endDate,
     trip_travelers: Number(plan.travelers) || 1,
     trip_budget_total: plan.budget == null ? null : Number(plan.budget),
     trip_preferences: {input: plan.input, planner_version: 'v2'},
@@ -42,12 +56,12 @@ export async function POST(request: Request) {
     itineraryByKey.set(`${item.day}:${item.name}`, item);
   }
 
-  const rows = (plan.days ?? []).flatMap((day:any) => {
+  const rows = plan.days.flatMap((day:any) => {
     const tripDay = days?.find((value:any) => value.day_number === day.day);
     if (!tripDay) return [];
     return (day.items ?? []).map((item:any, index:number) => {
       const itinerary = itineraryByKey.get(`${day.day}:${item.name}`);
-      const startsAt = toIso(tripDay.service_date || dateForDay(plan.startDate || null, day.day), itinerary?.startTime || null);
+      const startsAt = toIso(tripDay.service_date, itinerary?.startTime || null);
       const duration = Number(item.duration);
       const endsAt = startsAt && Number.isFinite(duration) && duration > 0
         ? new Date(new Date(startsAt).getTime() + duration * 60000).toISOString()
