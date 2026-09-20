@@ -1,19 +1,4 @@
-import type { Listing } from '@/types/listing';
+import type {Listing} from '@/types/listing';
 import Link from 'next/link';
-
-export function ListingCard({ listing, editable = false }: { listing: Listing & { score?: number }; editable?: boolean }) {
-  return (
-    <div className="card">
-      <Link href={`/stay/${listing.slug}`}>
-        {listing.images?.[0] ? <img src={listing.images[0]} alt={listing.name} style={{ width: '100%', height: 220, objectFit: 'cover', display: 'block' }} /> : <div className="thumb" />}
-        <div className="card-body">
-          <h3>{listing.name}</h3>
-          <div className="muted">{listing.location} · {listing.vibe.slice(0, 3).join(' · ')}</div>
-          <div className="price">฿{listing.price.toLocaleString()} {listing.priceUnit}</div>
-          {typeof listing.score === 'number' && <div className="muted" style={{ marginTop: 6, fontSize: '.8rem' }}>AI Match {Math.round(listing.score * 100)}%</div>}
-        </div>
-      </Link>
-      {editable && <div style={{ padding: '0 16px 16px' }}><Link href={`/host/listings/${listing.id}/edit`} className="btn btn-primary">แก้ไข Listing</Link></div>}
-    </div>
-  );
-}
+import styles from './ListingCard.module.css';
+export function ListingCard({listing,editable=false}:{listing:Listing&{score?:number};editable?:boolean}){return <article className={styles.card}><Link href={`/stay/${listing.slug}`}><>{listing.images?.[0]?<img src={listing.images[0]} alt={listing.name} className={styles.image}/>:<div className={styles.thumb}/>}</><div className={styles.body}><div className={styles.location}>⌖ {listing.location||'Khao Yai'}</div><h3 className={styles.name}>{listing.name}</h3><p className={styles.vibe}>{listing.vibe.slice(0,3).join(' · ')||'Local stay'}</p><div className={styles.bottom}><div><span className={styles.priceLabel}>เริ่มต้น</span><span className={styles.price}>฿{listing.price.toLocaleString()} {listing.priceUnit}</span></div><span className={styles.add}>+</span></div>{typeof listing.score==='number'&&<p className={styles.vibe}>AI Match {Math.round(listing.score*100)}%</p>}</div></Link>{editable&&<div className={styles.editable}><Link href={`/host/listings/${listing.id}/edit`} className={`btn btn-primary ${styles.edit}`}>แก้ไข Listing</Link></div>}</article>}
