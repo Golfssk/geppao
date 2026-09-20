@@ -1,4 +1,5 @@
 import './globals.css';
+import './design-system.css';
 import {createClient} from '@/lib/supabase/server';
 import {LocaleProvider} from '@/components/i18n/LocaleProvider';
 import {SiteChrome} from '@/components/navigation/SiteChrome';
