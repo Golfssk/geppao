@@ -2,6 +2,7 @@ import './globals.css';
 import './design-system.css';
 import './trip-workspace.css';
 import './brand.css';
+import './accessibility.css';
 import {createClient} from '@/lib/supabase/server';
 import {LocaleProvider} from '@/components/i18n/LocaleProvider';
 import {SiteChrome} from '@/components/navigation/SiteChrome';
