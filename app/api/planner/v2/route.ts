@@ -85,30 +85,70 @@ export async function POST(request:Request){
     ].filter(Boolean).join(' · ')||'ตรงกับข้อมูลพื้นฐานของทริป'};
   });
 
+  const budget=req.budgetTotal;
+  const dayCount=Math.max(1,req.nights+1);
+  const maxVisitMinutes=Math.max(300, Math.floor(540/dayCount));
   const accommodation=mapped.filter(x=>x.type==='accommodation').sort((a,b)=>b.score-a.score);
-  const categories=['restaurant','cafe','attraction','activity'];
   const selected:any[]=[];
-  if(accommodation[0])selected.push(accommodation[0]);
+  let runningCost=0;
+  const chooseWithinBudget=(items:any[], required=false)=>{
+    for(const candidate of [...items].sort((a,b)=>b.score-a.score)){
+      if(selected.some(x=>x.id===candidate.id)) continue;
+      const nextCost=runningCost+(candidate.cost??0);
+      if(budget!=null && candidate.cost!=null && nextCost>budget) continue;
+      if(!required && candidate.duration!=null && candidate.duration>maxVisitMinutes) continue;
+      selected.push(candidate); runningCost+=candidate.cost??0; return candidate;
+    }
+    return null;
+  };
+  chooseWithinBudget(accommodation,true);
+
+  const categories=['attraction','activity','restaurant','cafe'];
   for(const type of categories){
-    const candidate=mapped.filter(x=>x.type===type).sort((a,b)=>b.score-a.score)[0];
-    if(candidate)selected.push(candidate);
+    const candidates=mapped.filter(x=>x.type===type);
+    chooseWithinBudget(candidates);
   }
 
   const eventItems=(events??[]).filter((e:any)=>e.event_schedules?.some((s:any)=>s.status==='scheduled'&&(!req.startDate||s.starts_at>=req.startDate)&&(!req.endDate||s.starts_at<=req.endDate+'T23:59:59+07:00'))).map((e:any)=>{
     const price=priceOf(e.price_items??[]);
     return {kind:'event',id:e.id,name:e.name,slug:e.slug,type:'event',location:e.temporary_venue_name||e.address,latitude:e.latitude,longitude:e.longitude,cost:estimateCost(price,req.travelers,req.nights,'event'),unit:price.unit,priceStatus:price.status,duration:null,score:2,reason:'Event ที่เผยแพร่และมีรอบตรงกับช่วงเดินทาง'};
   });
-  if(eventItems[0])selected.push(eventItems[0]);
+  chooseWithinBudget(eventItems);
+
+  // Fill remaining itinerary capacity with high-scoring candidates, while respecting
+  // the daily time budget and avoiding duplicate places.
+  const remaining=mapped.filter(x=>!selected.some(s=>s.id===x.id)).sort((a,b)=>b.score-a.score);
+  for(const candidate of remaining){
+    if(selected.length>=1+dayCount*2) break;
+    if(candidate.duration!=null && candidate.duration>maxVisitMinutes) continue;
+    if(budget!=null && candidate.cost!=null && runningCost+candidate.cost>budget) continue;
+    selected.push(candidate); runningCost+=candidate.cost??0;
+  }
 
   const total=selected.reduce((s,x)=>s+(x.cost??0),0);
-  const budget=req.budgetTotal;
   const budgetFit=budget==null?null:total<=budget;
-  const dayCount=Math.max(1,req.nights+1);
   const accommodationItem=selected.find(x=>x.type==='accommodation');
   const nonStay=selected.filter(x=>x.type!=='accommodation');
   const days:any[]=Array.from({length:dayCount},(_,i)=>({day:i+1,items:[]}));
   if(accommodationItem) days[0].items.push({...accommodationItem,role:'stay'});
-  nonStay.forEach((item:any,index:number)=>days[Math.min(dayCount-1,Math.floor(index/2))].items.push({...item,role:'visit'}));
+  // Build a route-aware sequence: each next stop is the closest remaining candidate.
+  let anchor=accommodationItem ?? null;
+  const remainingVisits=[...nonStay];
+  while(remainingVisits.length){
+    let index=0;
+    if(anchor?.latitude!=null && anchor?.longitude!=null){
+      let best=Infinity;
+      remainingVisits.forEach((candidate:any,i:number)=>{
+        if(candidate.latitude==null||candidate.longitude==null)return;
+        const d=haversineKm({latitude:anchor.latitude,longitude:anchor.longitude},{latitude:candidate.latitude,longitude:candidate.longitude});
+        if(d<best){best=d;index=i;}
+      });
+    }
+    const next=remainingVisits.splice(index,1)[0];
+    anchor=next;
+    const dayIndex=Math.min(dayCount-1, Math.floor((days.flatMap((d:any)=>d.items).filter((x:any)=>x.role==='visit').length)/2));
+    days[dayIndex].items.push({...next,role:'visit'});
+  }
   const routeDays=days.map(day=>{const route=routeEstimate(day.items);return {...day,estimatedTravelKm:route.km,estimatedTravelMinutes:route.minutes,routeSegments:route.segments};});
   const itinerary=routeDays.flatMap(day=>day.items.map((item:any,index:number)=>({day:day.day,type:item.type,name:item.name,duration:item.duration,startTime:index===0?'10:00':index===1?'14:00':'18:00'})));
   const missingPrice=selected.filter(x=>x.cost==null).length;
