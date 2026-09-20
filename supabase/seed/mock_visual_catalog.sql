@@ -1,0 +1,5 @@
+-- Visual mockup catalog only. Do not use these values as verified place facts.
+-- This repository fixture documents the demo-only external media strategy used in the staged visual mockup.
+-- Every synthetic Event must keep a demo- prefix and verification_status = 'unverified'.
+-- Images use alt text beginning with: ภาพตัวอย่างสำหรับ mockup
+-- This makes it possible for the product UI to disclose mock imagery without blocking visual QA.
