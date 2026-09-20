@@ -3,6 +3,7 @@ import {createClient} from '@/lib/supabase/server';
 
 type PriceStatus = 'missing' | 'estimated' | 'confirmed';
 type Price = {cost:number|null; status:PriceStatus; unit:string|null};
+type Coord = {latitude:number; longitude:number};
 
 const number=(value:string, pattern:RegExp)=>{const m=value.match(pattern);return m?Number(m[1].replace(/,/g,'')):undefined;};
 
@@ -32,6 +33,8 @@ function estimateCost(price:Price, travelers:number,nights:number,type:string){
   if(type==='accommodation')return price.cost*nights;
   return price.cost;
 }
+function haversineKm(a:Coord,b:Coord){const r=6371,rad=(d:number)=>d*Math.PI/180;const dLat=rad(b.latitude-a.latitude),dLon=rad(b.longitude-a.longitude);const x=Math.sin(dLat/2)**2+Math.cos(rad(a.latitude))*Math.cos(rad(b.latitude))*Math.sin(dLon/2)**2;return r*2*Math.atan2(Math.sqrt(x),Math.sqrt(1-x));}
+function routeEstimate(items:any[]){let km=0;const segments:any[]=[];for(let i=1;i<items.length;i++){const a=items[i-1],b=items[i];if(a.latitude==null||a.longitude==null||b.latitude==null||b.longitude==null)continue;const distance=Number(haversineKm({latitude:a.latitude,longitude:a.longitude},{latitude:b.latitude,longitude:b.longitude}).toFixed(2));const minutes=Math.ceil(distance/35*60);km+=distance;segments.push({fromId:a.id,toId:b.id,distanceKm:distance,durationMinutes:minutes,provider:'haversine',confidence:'estimate'});}return {km:Number(km.toFixed(2)),minutes:segments.reduce((s,x)=>s+x.durationMinutes,0),segments};}
 function keywordScore(text:string, type:string, place:any){
   const hay=[place.name,place.description,place.place_type,place.address].filter(Boolean).join(' ').toLowerCase();
   const rules:Record<string,string[]>={
@@ -52,7 +55,7 @@ export async function POST(request:Request){
   const supabase=await createClient();
 
   const [{data:places,error:placeError},{data:events,error:eventError}]=await Promise.all([
-    supabase.from('places').select('id,name,slug,description,place_type,address,max_group_size,pet_friendly,child_friendly,recommended_duration_minutes,place_hours(day_of_week,open_time,close_time,is_closed),price_items(label,amount_min,amount_max,currency,price_unit,is_estimate)').eq('publication_status','published'),
+    supabase.from('places').select('id,name,slug,description,place_type,address,latitude,longitude,max_group_size,pet_friendly,child_friendly,recommended_duration_minutes,place_hours(day_of_week,open_time,close_time,is_closed),price_items(label,amount_min,amount_max,currency,price_unit,is_estimate)').eq('publication_status','published'),
     supabase.from('events').select('id,name,slug,description,address,temporary_venue_name,event_schedules(starts_at,ends_at,status),price_items(label,amount_min,amount_max,currency,price_unit,is_estimate)').eq('publication_status','published')
   ]);
   if(placeError)return NextResponse.json({error:placeError.message},{status:500});
@@ -74,7 +77,7 @@ export async function POST(request:Request){
     if(req.family&&p.child_friendly===true)score+=3;
     if(p.recommended_duration_minutes!=null)score+=1;
     if(price.cost!=null)score+=1;
-    return {kind:'place',id:p.id,name:p.name,slug:p.slug,type:p.place_type,location:p.address,cost:estimatedCost,unit:price.unit,priceStatus:price.status,duration:p.recommended_duration_minutes??null,score,reason:[
+    return {kind:'place',id:p.id,name:p.name,slug:p.slug,type:p.place_type,location:p.address,latitude:p.latitude,longitude:p.longitude,cost:estimatedCost,unit:price.unit,priceStatus:price.status,duration:p.recommended_duration_minutes??null,score,reason:[
       req.pet&&p.pet_friendly===true?'รองรับสัตว์เลี้ยง':'',
       req.family&&p.child_friendly===true?'เหมาะกับครอบครัว':'',
       keywordScore(text,p.place_type,p)>0?'ตรงกับความสนใจของทริป':'',
@@ -93,7 +96,7 @@ export async function POST(request:Request){
 
   const eventItems=(events??[]).filter((e:any)=>e.event_schedules?.some((s:any)=>s.status==='scheduled'&&(!req.startDate||s.starts_at>=req.startDate)&&(!req.endDate||s.starts_at<=req.endDate+'T23:59:59+07:00'))).map((e:any)=>{
     const price=priceOf(e.price_items??[]);
-    return {kind:'event',id:e.id,name:e.name,slug:e.slug,type:'event',location:e.temporary_venue_name||e.address,cost:estimateCost(price,req.travelers,req.nights,'event'),unit:price.unit,priceStatus:price.status,duration:null,score:2,reason:'Event ที่เผยแพร่และมีรอบตรงกับช่วงเดินทาง'};
+    return {kind:'event',id:e.id,name:e.name,slug:e.slug,type:'event',location:e.temporary_venue_name||e.address,latitude:e.latitude,longitude:e.longitude,cost:estimateCost(price,req.travelers,req.nights,'event'),unit:price.unit,priceStatus:price.status,duration:null,score:2,reason:'Event ที่เผยแพร่และมีรอบตรงกับช่วงเดินทาง'};
   });
   if(eventItems[0])selected.push(eventItems[0]);
 
@@ -101,14 +104,20 @@ export async function POST(request:Request){
   const budget=req.budgetTotal;
   const budgetFit=budget==null?null:total<=budget;
   const dayCount=Math.max(1,req.nights+1);
-  const itinerary=selected.map((item,index)=>({day:Math.min(dayCount,index+1),type:item.type,name:item.name,duration:item.duration,startTime:index===0?'14:00':index===selected.length-1?'18:00':null}));
+  const accommodationItem=selected.find(x=>x.type==='accommodation');
+  const nonStay=selected.filter(x=>x.type!=='accommodation');
+  const days:any[]=Array.from({length:dayCount},(_,i)=>({day:i+1,items:[]}));
+  if(accommodationItem) days[0].items.push({...accommodationItem,role:'stay'});
+  nonStay.forEach((item:any,index:number)=>days[Math.min(dayCount-1,Math.floor(index/2))].items.push({...item,role:'visit'}));
+  const routeDays=days.map(day=>{const route=routeEstimate(day.items);return {...day,estimatedTravelKm:route.km,estimatedTravelMinutes:route.minutes,routeSegments:route.segments};});
+  const itinerary=routeDays.flatMap(day=>day.items.map((item:any,index:number)=>({day:day.day,type:item.type,name:item.name,duration:item.duration,startTime:index===0?'10:00':index===1?'14:00':'18:00'})));
   const missingPrice=selected.filter(x=>x.cost==null).length;
 
   return NextResponse.json({plan:{
-    input:text,travelers:req.travelers,budget:budget??null,budgetPerPerson:req.budgetPerPerson??null,startDate:req.startDate||null,endDate:req.endDate||null,nights:req.nights,totalEstimatedCost:total,budgetFit,costCoverage:missingPrice===0?'complete':total>0?'partial':'missing',items:selected,itinerary,
+    input:text,travelers:req.travelers,budget:budget??null,budgetPerPerson:req.budgetPerPerson??null,startDate:req.startDate||null,endDate:req.endDate||null,nights:req.nights,totalEstimatedCost:total,budgetFit,costCoverage:missingPrice===0?'complete':total>0?'partial':'missing',items:selected,itinerary,days:routeDays,routeKm:routeDays.reduce((s,d)=>s+d.estimatedTravelKm,0),routeMinutes:routeDays.reduce((s,d)=>s+d.estimatedTravelMinutes,0),
     limitations:[
       'การจัดลำดับนี้ใช้ข้อมูล Published จริงจาก GepPao',
-      'ยังไม่คำนวณระยะทาง/เวลาเดินทางจริงระหว่างสถานที่',
+      'เส้นทางเป็น Estimate จากพิกัดและความเร็วเฉลี่ย 35 km/h; ยังไม่ใช่เวลา Google Maps แบบ real-time',
       missingPrice?'บางรายการยังไม่มีราคาที่ใช้คำนวณได้':'',
       budgetFit===false?'ยอดประมาณการเกินงบที่ระบุ จึงควรปรับจำนวนกิจกรรม/ตัวเลือก':'',
       'ควรตรวจสอบราคา เวลาเปิด–ปิด และรอบ Event ก่อนเดินทาง'
