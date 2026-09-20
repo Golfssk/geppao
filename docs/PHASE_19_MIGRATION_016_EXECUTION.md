@@ -10,27 +10,25 @@
 - Adds a new analytics table and indexes.
 - Adds two security-definer RPCs.
 - Does not update, delete, publish, or reclassify Local Data.
-- Does not change existing Search, Planner, Trip, Business, or Admin behavior until application instrumentation is implemented.
-
-## Run order
-
-1. Copy the complete migration into Supabase SQL Editor and run it once.
-2. Copy the complete verification query and run it.
-3. Confirm all ten checks return `PASS`.
-
-## Expected verification checks
-
-- `admin_read_policy`
-- `admin_summary_grant`
-- `analytics_rls_enabled`
-- `analytics_summary_function`
-- `analytics_table`
-- `anonymous_tracking_grant`
-- `authenticated_tracking_grant`
-- `no_direct_insert_policy`
-- `required_constraints`
-- `track_product_event_function`
+- Does not change existing Search, Planner, Trip, Business, or Admin behavior until application instrumentation is deployed.
 
 ## Result
 
-Pending project-owner execution and confirmation.
+The project owner ran Migration 016 and the consolidated verification query successfully.
+
+| Check | Result |
+| --- | --- |
+| `admin_read_policy` | PASS |
+| `admin_summary_grant` | PASS |
+| `analytics_rls_enabled` | PASS |
+| `analytics_summary_function` | PASS |
+| `analytics_table` | PASS |
+| `anonymous_tracking_grant` | PASS |
+| `authenticated_tracking_grant` | PASS |
+| `no_direct_insert_policy` | PASS |
+| `required_constraints` | PASS |
+| `track_product_event_function` | PASS |
+
+## Gate decision
+
+The Migration 016 database gate is complete. Application instrumentation may now rely on the analytics table and RPCs. PR #20 must still pass TypeScript, production build, functional QA, and production verification before merge.
