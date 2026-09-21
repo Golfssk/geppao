@@ -1,3 +1,7 @@
-import { NextResponse } from 'next/server';
-export async function GET(req:Request){const url=new URL(req.url);return NextResponse.json({status:'prototype',message:'Lead endpoint ready for Supabase insert.',listingId:url.searchParams.get('listingId')});}
-export async function POST(req:Request){const body=await req.json();return NextResponse.json({status:'prototype',lead:body});}
+import {NextResponse} from 'next/server';
+import {createClient} from '@/lib/supabase/server';
+
+const EMAIL=/^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+const clean=(value:unknown,max:number)=>typeof value==='string'?value.trim().slice(0,max):'';
+
+export async function POST(request:Request){let body:any;try{body=await request.json()}catch{return NextResponse.json({error:'ข้อมูลที่ส่งมาไม่ถูกต้อง'},{status:400})}if(clean(body?.website,200))return NextResponse.json({accepted:true},{status:201});const name=clean(body?.name,100),email=clean(body?.email,320).toLowerCase(),phone=clean(body?.phone,30),message=clean(body?.message,3000);if(name.length<2)return NextResponse.json({error:'กรุณาระบุชื่ออย่างน้อย 2 ตัวอักษร'},{status:400});if(!EMAIL.test(email))return NextResponse.json({error:'กรุณาระบุอีเมลให้ถูกต้อง'},{status:400});if(phone.length<8)return NextResponse.json({error:'กรุณาระบุเบอร์โทรให้ถูกต้อง'},{status:400});if(message.length<10)return NextResponse.json({error:'กรุณาระบุรายละเอียดอย่างน้อย 10 ตัวอักษร'},{status:400});const supabase=await createClient();const{data:{user}}=await supabase.auth.getUser();const{error}=await supabase.from('leads').insert({user_id:user?.id??null,action:'contact_form',source:'contact_page',contact_name:name,contact_email:email,contact_phone:phone,message});if(error){console.error('Contact lead insert failed',error.code);return NextResponse.json({error:'ยังส่งข้อความไม่ได้ กรุณาลองใหม่อีกครั้ง'},{status:500})}return NextResponse.json({accepted:true},{status:201})}
