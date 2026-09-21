@@ -1,7 +1,7 @@
 import type {Metadata} from 'next';
+import {ContactForm} from '@/components/contact/ContactForm';
 import styles from './Contact.module.css';
 
 export const metadata:Metadata={title:'ติดต่อเรา'};
-const email='natthapatee.r@gmail.com';
 
-export default function ContactPage(){return <main className="page"><section className={styles.hero}><div className={styles.inner}><p className="eyebrow">CONTACT GEPPAO</p><h1>คุยกับผู้ดูแล GepPao โดยตรง</h1><p>สอบถามการใช้งาน แจ้งข้อมูลสถานที่ หรือสมัครลงทะเบียนที่พักฟรีได้ทางอีเมลส่วนตัว เราจะอ่านและตอบกลับด้วยตัวเอง</p><div className={styles.actions}><a className="btn btn-primary" href={`mailto:${email}?subject=${encodeURIComponent('ติดต่อ GepPao')}`}>ส่งอีเมลถึงผู้ดูแล</a><a className="btn btn-outline" href={`mailto:${email}?subject=${encodeURIComponent('สมัครลงทะเบียนที่พักฟรีกับ GepPao')}`}>ลงทะเบียนที่พักฟรี</a></div><div className={styles.card}><span>อีเมล</span><a href={`mailto:${email}`}>{email}</a><p>เพื่อความรวดเร็ว กรุณาระบุชื่อ สถานที่ และช่องทางติดต่อกลับในอีเมล</p></div></div></section></main>}
+export default function ContactPage(){return <main className="page"><section className={styles.hero}><div className={styles.intro}><p className="eyebrow">CONTACT GEPPAO</p><h1>ติดต่อ GepPao</h1><p>กรอกข้อมูลด้านล่างเพื่อสอบถามการใช้งาน แจ้งข้อมูลสถานที่ หรือสมัครลงทะเบียนที่พักฟรี</p></div></section><section className={styles.section}><div className={styles.layout}><aside className={styles.summary}><span className={styles.badge}>ติดต่อโดยตรง</span><h2>เล่าให้เราฟังว่าต้องการความช่วยเหลือเรื่องอะไร</h2><p>ทีม GepPao จะใช้ข้อมูลนี้เพื่อติดต่อกลับเกี่ยวกับคำขอของคุณเท่านั้น</p><ul><li>สอบถามการใช้งาน GepPao</li><li>แจ้งหรือแก้ไขข้อมูลสถานที่</li><li>ลงทะเบียนที่พักหรือธุรกิจท้องถิ่น</li></ul></aside><ContactForm/></div></section></main>}
