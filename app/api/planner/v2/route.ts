@@ -4,22 +4,28 @@ import {createClient} from '@/lib/supabase/server';
 type PriceStatus = 'missing' | 'estimated' | 'confirmed';
 type Price = {cost:number|null; status:PriceStatus; unit:string|null};
 type Coord = {latitude:number; longitude:number};
+type PlannerPreferences={tripMode?:'day_trip'|'overnight';pet?:boolean;family?:boolean;vibes?:string[]};
+const ALLOWED_VIBES=['ธรรมชาติ','คาเฟ่','อาหาร','ชิล','ถ่ายรูป','กิจกรรม','adventure'];
 
 const number=(value:string, pattern:RegExp)=>{const m=value.match(pattern);return m?Number(m[1].replace(/,/g,'')):undefined;};
 const hasText=(value:unknown)=>typeof value==='string'&&value.trim().length>0;
 const hasCoordinate=(value:unknown)=>value!==null&&value!==undefined&&value!==''&&Number.isFinite(Number(value));
 
-function parseRequest(text:string,startDate?:string,endDate?:string){
+function parseRequest(text:string,startDate?:string,endDate?:string,preferences:PlannerPreferences={}){
   const travelers=number(text,/(?:ไป|กับ|สำหรับ|ทั้งหมด)?\s*(\d+)\s*(?:คน|ท่าน)/i)||2;
   const budgetPerPerson=number(text,/(?:งบ|budget)[^\d]*(\d[\d,]*)\s*(?:บาท)?\s*(?:\/|ต่อ)\s*(?:คน|ท่าน)/i)
     ?? number(text,/(\d[\d,]*)\s*บาท\s*\/\s*คน/i);
   const budgetTotal=number(text,/(?:งบ|budget)[^\d]*(\d[\d,]*)\s*(?:บาท)?/i);
-  const nights=number(text,/(\d+)\s*(?:คืน|night|nights)/i) ?? (startDate&&endDate ? Math.max(1,Math.round((new Date(endDate).getTime()-new Date(startDate).getTime())/86400000)) : 1);
-  const pet=/หมา|สุนัข|แมว|สัตว์เลี้ยง|pet/i.test(text);
-  const family=/ครอบครัว|เด็ก|family|ลูก/i.test(text);
-  const vibeKeywords=['ธรรมชาติ','คาเฟ่','กาแฟ','กิน','อาหาร','ร้านอาหาร','ปาร์ตี้','party','ชิล','พักผ่อน','ถ่ายรูป','กิจกรรม','adventure','ธรรมชาติ'];
-  const wants=vibeKeywords.filter(k=>text.toLowerCase().includes(k.toLowerCase()));
-  return {travelers,budgetPerPerson,budgetTotal:budgetPerPerson?budgetPerPerson*travelers:budgetTotal,nights,pet,family,wants,startDate,endDate};
+  const dateNights=startDate&&endDate?Math.max(0,Math.round((new Date(endDate).getTime()-new Date(startDate).getTime())/86400000)):undefined;
+  const explicitDayTrip=preferences.tripMode==='day_trip'||/วันเดียว|ไปเช้าเย็นกลับ|ไม่ค้างคืน|day\s*trip/i.test(text)||dateNights===0;
+  const nights=explicitDayTrip?0:(number(text,/(\d+)\s*(?:คืน|night|nights)/i)??dateNights??1);
+  const pet=preferences.pet===true||/หมา|สุนัข|แมว|สัตว์เลี้ยง|pet/i.test(text);
+  const family=preferences.family===true||/ครอบครัว|เด็ก|family|ลูก/i.test(text);
+  const textVibes=ALLOWED_VIBES.filter(keyword=>text.toLowerCase().includes(keyword.toLowerCase()));
+  const selectedVibes=Array.isArray(preferences.vibes)?preferences.vibes.filter(value=>ALLOWED_VIBES.includes(value)):[];
+  const wants=[...new Set([...textVibes,...selectedVibes])];
+  const dayCount=dateNights!==undefined?dateNights+1:nights+1;
+  return {travelers,budgetPerPerson,budgetTotal:budgetPerPerson?budgetPerPerson*travelers:budgetTotal,nights,dayCount,tripMode:explicitDayTrip?'day_trip' as const:'overnight' as const,pet,family,wants,startDate,endDate};
 }
 
 function priceOf(items:any[]):Price{
@@ -93,7 +99,8 @@ export async function POST(request:Request){
   try{body=await request.json();}catch{return NextResponse.json({error:'Invalid JSON body'},{status:400});}
   const text=String(body?.input||'').trim();
   if(!text)return NextResponse.json({error:'กรุณาระบุความต้องการของทริป'},{status:400});
-  const req=parseRequest(text,body?.startDate,body?.endDate);
+  if(body?.startDate&&body?.endDate&&body.endDate<body.startDate)return NextResponse.json({error:'วันสิ้นสุดต้องไม่ก่อนวันเริ่มเดินทาง'},{status:400});
+  const req=parseRequest(text,body?.startDate,body?.endDate,body?.preferences??{});
   const supabase=await createClient();
 
   const [{data:places,error:placeError},{data:events,error:eventError}]=await Promise.all([
@@ -112,21 +119,17 @@ export async function POST(request:Request){
   });
   const readiness=plannerReadinessSummary(publishedPlaces,eligible);
   const plannerReady=eligible.filter(isPlannerReadyPlace);
-  // Prefer fully verified records, but provide a transparent partial plan when
-  // owners have supplied enough routing information to make a useful draft.
   const partialReady=eligible.filter((p:any)=>hasCoordinate(p.latitude)
     && hasCoordinate(p.longitude)
     && hasText(p.description)
     && Number.isFinite(Number(p.recommended_duration_minutes))
     && Number(p.recommended_duration_minutes)>0);
-  const candidatePool=plannerReady.length?plannerReady:partialReady;
-  const usingPartialData=!plannerReady.length;
+  const fullForMode=plannerReady.filter((place:any)=>req.tripMode!=='day_trip'||place.place_type!=='accommodation');
+  const partialForMode=partialReady.filter((place:any)=>req.tripMode!=='day_trip'||place.place_type!=='accommodation');
+  const candidatePool=fullForMode.length?fullForMode:partialForMode;
+  const usingPartialData=!fullForMode.length;
   if(!candidatePool.length){
-    return NextResponse.json({
-      error:'ยังไม่มีสถานที่ที่มีพิกัด รายละเอียด และระยะเวลาพอสำหรับสร้างแผนทริป',
-      dataReadiness:readiness,
-      nextStep:'เพิ่มพิกัด รายละเอียด และระยะเวลาที่แนะนำให้กับสถานที่อย่างน้อยหนึ่งรายการ'
-    },{status:422});
+    return NextResponse.json({error:'ยังไม่มีสถานที่ที่มีพิกัด รายละเอียด และระยะเวลาพอสำหรับสร้างแผนทริป',dataReadiness:readiness,nextStep:'เพิ่มพิกัด รายละเอียด และระยะเวลาที่แนะนำให้กับสถานที่อย่างน้อยหนึ่งรายการ'},{status:422});
   }
 
   const mapped=candidatePool.map((p:any)=>{
@@ -138,16 +141,11 @@ export async function POST(request:Request){
     if(req.family&&p.child_friendly===true)score+=3;
     if(p.recommended_duration_minutes!=null)score+=1;
     if(price.cost!=null)score+=1;
-    return {kind:'place',id:p.id,name:p.name,slug:p.slug,type:p.place_type,location:p.address,latitude:p.latitude,longitude:p.longitude,cost:estimatedCost,unit:price.unit,priceStatus:price.status,duration:p.recommended_duration_minutes??null,score,reason:[
-      req.pet&&p.pet_friendly===true?'รองรับสัตว์เลี้ยง':'',
-      req.family&&p.child_friendly===true?'เหมาะกับครอบครัว':'',
-      keywordScore(text,p.place_type,p)>0?'ตรงกับความสนใจของทริป':'',
-      usingPartialData?'ใช้ข้อมูลบางส่วน — ควรตรวจสอบราคาและเวลาเปิด–ปิด':'ผ่านเกณฑ์ข้อมูลพร้อมใช้สำหรับ Planner',
-    ].filter(Boolean).join(' · ')};
+    return {kind:'place',id:p.id,name:p.name,slug:p.slug,type:p.place_type,location:p.address,latitude:p.latitude,longitude:p.longitude,cost:estimatedCost,unit:price.unit,priceStatus:price.status,duration:p.recommended_duration_minutes??null,score,reason:[req.pet&&p.pet_friendly===true?'รองรับสัตว์เลี้ยง':'',req.family&&p.child_friendly===true?'เหมาะกับครอบครัว':'',keywordScore(text,p.place_type,p)>0?'ตรงกับความสนใจของทริป':'',usingPartialData?'ใช้ข้อมูลบางส่วน — ควรตรวจสอบราคาและเวลาเปิด–ปิด':'ผ่านเกณฑ์ข้อมูลพร้อมใช้สำหรับ Planner'].filter(Boolean).join(' · ')};
   });
 
   const budget=req.budgetTotal;
-  const dayCount=Math.max(1,req.nights+1);
+  const dayCount=Math.max(1,req.dayCount);
   const maxVisitMinutes=Math.max(300, Math.floor(540/dayCount));
   const accommodation=mapped.filter(x=>x.type==='accommodation').sort((a,b)=>b.score-a.score);
   const selected:any[]=[];
@@ -162,62 +160,26 @@ export async function POST(request:Request){
     }
     return null;
   };
-  chooseWithinBudget(accommodation,true);
+  if(req.tripMode==='overnight')chooseWithinBudget(accommodation,true);
+  for(const type of ['attraction','activity','restaurant','cafe'])chooseWithinBudget(mapped.filter(x=>x.type===type));
 
-  const categories=['attraction','activity','restaurant','cafe'];
-  for(const type of categories){
-    const candidates=mapped.filter(x=>x.type===type);
-    chooseWithinBudget(candidates);
-  }
-
-  const eventItems=(events??[]).filter((event:any)=>isPlannerReadyEvent(event,req)).map((e:any)=>{
-    const price=priceOf(e.price_items??[]);
-    return {kind:'event',id:e.id,name:e.name,slug:e.slug,type:'event',location:e.temporary_venue_name||e.address,latitude:e.latitude,longitude:e.longitude,cost:estimateCost(price,req.travelers,req.nights,'event'),unit:price.unit,priceStatus:price.status,duration:null,score:2,reason:'Event ที่เผยแพร่ มีข้อมูลสถานที่ และมีรอบตรงกับช่วงเดินทาง'};
-  });
+  const eventItems=(events??[]).filter((event:any)=>isPlannerReadyEvent(event,req)).map((e:any)=>{const price=priceOf(e.price_items??[]);return {kind:'event',id:e.id,name:e.name,slug:e.slug,type:'event',location:e.temporary_venue_name||e.address,latitude:e.latitude,longitude:e.longitude,cost:estimateCost(price,req.travelers,req.nights,'event'),unit:price.unit,priceStatus:price.status,duration:null,score:2,reason:'Event ที่เผยแพร่ มีข้อมูลสถานที่ และมีรอบตรงกับช่วงเดินทาง'};});
   chooseWithinBudget(eventItems);
-
   const remaining=mapped.filter(x=>!selected.some(s=>s.id===x.id)).sort((a,b)=>b.score-a.score);
-  for(const candidate of remaining){
-    if(selected.length>=1+dayCount*2) break;
-    if(candidate.duration!=null && candidate.duration>maxVisitMinutes) continue;
-    if(budget!=null && candidate.cost!=null && runningCost+candidate.cost>budget) continue;
-    selected.push(candidate); runningCost+=candidate.cost??0;
-  }
+  for(const candidate of remaining){if(selected.length>=1+dayCount*2)break;if(candidate.duration!=null&&candidate.duration>maxVisitMinutes)continue;if(budget!=null&&candidate.cost!=null&&runningCost+candidate.cost>budget)continue;selected.push(candidate);runningCost+=candidate.cost??0;}
 
   const total=selected.reduce((s,x)=>s+(x.cost??0),0);
   const budgetFit=budget==null?null:total<=budget;
   const accommodationItem=selected.find(x=>x.type==='accommodation');
   const nonStay=selected.filter(x=>x.type!=='accommodation');
   const days:any[]=Array.from({length:dayCount},(_,i)=>({day:i+1,items:[]}));
-  if(accommodationItem) days[0].items.push({...accommodationItem,role:'stay'});
-  let anchor=accommodationItem ?? null;
+  if(accommodationItem)days[0].items.push({...accommodationItem,role:'stay'});
+  let anchor=accommodationItem??null;
   const remainingVisits=[...nonStay];
-  while(remainingVisits.length){
-    let index=0;
-    if(anchor?.latitude!=null && anchor?.longitude!=null){
-      let best=Infinity;
-      remainingVisits.forEach((candidate:any,i:number)=>{
-        if(candidate.latitude==null||candidate.longitude==null)return;
-        const d=haversineKm({latitude:anchor.latitude,longitude:anchor.longitude},{latitude:candidate.latitude,longitude:candidate.longitude});
-        if(d<best){best=d;index=i;}
-      });
-    }
-    const next=remainingVisits.splice(index,1)[0];
-    anchor=next;
-    const dayIndex=Math.min(dayCount-1, Math.floor((days.flatMap((d:any)=>d.items).filter((x:any)=>x.role==='visit').length)/2));
-    days[dayIndex].items.push({...next,role:'visit'});
-  }
+  while(remainingVisits.length){let index=0;if(anchor?.latitude!=null&&anchor?.longitude!=null){let best=Infinity;remainingVisits.forEach((candidate:any,i:number)=>{if(candidate.latitude==null||candidate.longitude==null)return;const d=haversineKm({latitude:anchor.latitude,longitude:anchor.longitude},{latitude:candidate.latitude,longitude:candidate.longitude});if(d<best){best=d;index=i;}});}const next=remainingVisits.splice(index,1)[0];anchor=next;const dayIndex=Math.min(dayCount-1,Math.floor((days.flatMap((d:any)=>d.items).filter((x:any)=>x.role==='visit').length)/2));days[dayIndex].items.push({...next,role:'visit'});}
   const routeDays=days.map(day=>{const route=routeEstimate(day.items);return {...day,estimatedTravelKm:route.km,estimatedTravelMinutes:route.minutes,routeSegments:route.segments};});
   const itinerary=routeDays.flatMap(day=>day.items.map((item:any,index:number)=>({day:day.day,type:item.type,name:item.name,duration:item.duration,startTime:index===0?'10:00':index===1?'14:00':'18:00'})));
   const missingPrice=selected.filter(x=>x.cost==null).length;
 
-  return NextResponse.json({plan:{
-    input:text,travelers:req.travelers,budget:budget??null,budgetPerPerson:req.budgetPerPerson??null,startDate:req.startDate||null,endDate:req.endDate||null,nights:req.nights,totalEstimatedCost:total,budgetFit,costCoverage:missingPrice===0?'complete':total>0?'partial':'missing',items:selected,itinerary,days:routeDays,routeKm:routeDays.reduce((s,d)=>s+d.estimatedTravelKm,0),routeMinutes:routeDays.reduce((s,d)=>s+d.estimatedTravelMinutes,0),dataReadiness:readiness,
-    limitations:[
-      usingPartialData?'แผนนี้ใช้ข้อมูล Published ที่ยังไม่ครบทุกฟิลด์ จึงแสดงราคา/เวลาเปิด–ปิดที่ขาดอย่างโปร่งใส':'การจัดลำดับนี้เลือกเฉพาะสถานที่ Published ที่ผ่านเกณฑ์ข้อมูลพร้อมใช้ของ GepPao',
-      'เส้นทางเป็น Estimate จากพิกัดและความเร็วเฉลี่ย 35 km/h; ยังไม่ใช่เวลา Google Maps แบบ real-time',
-      budgetFit===false?'ยอดประมาณการเกินงบที่ระบุ จึงควรปรับจำนวนกิจกรรม/ตัวเลือก':'',
-      'ควรตรวจสอบราคา เวลาเปิด–ปิด และรอบ Event ก่อนเดินทาง'
-    ].filter(Boolean)
-  }});
+  return NextResponse.json({plan:{input:text,travelers:req.travelers,budget:budget??null,budgetPerPerson:req.budgetPerPerson??null,startDate:req.startDate||null,endDate:req.endDate||null,nights:req.nights,tripMode:req.tripMode,preferences:{pet:req.pet,family:req.family,vibes:req.wants},totalEstimatedCost:total,budgetFit,costCoverage:missingPrice===0?'complete':total>0?'partial':'missing',items:selected,itinerary,days:routeDays,routeKm:routeDays.reduce((s,d)=>s+d.estimatedTravelKm,0),routeMinutes:routeDays.reduce((s,d)=>s+d.estimatedTravelMinutes,0),dataReadiness:readiness,limitations:[req.tripMode==='day_trip'?'ทริปวันเดียวจะไม่เลือกที่พักและไม่นับค่าใช้จ่ายค้างคืน':'',usingPartialData?'แผนนี้ใช้ข้อมูล Published ที่ยังไม่ครบทุกฟิลด์ จึงแสดงราคา/เวลาเปิด–ปิดที่ขาดอย่างโปร่งใส':'การจัดลำดับนี้เลือกเฉพาะสถานที่ Published ที่ผ่านเกณฑ์ข้อมูลพร้อมใช้ของ GepPao','เส้นทางเป็น Estimate จากพิกัดและความเร็วเฉลี่ย 35 km/h; ยังไม่ใช่เวลา Google Maps แบบ real-time',budgetFit===false?'ยอดประมาณการเกินงบที่ระบุ จึงควรปรับจำนวนกิจกรรม/ตัวเลือก':'','ควรตรวจสอบราคา เวลาเปิด–ปิด และรอบ Event ก่อนเดินทาง'].filter(Boolean)}});
 }
