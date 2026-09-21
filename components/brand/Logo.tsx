@@ -1,1 +1,4 @@
-export function Logo({size=34}:{size?:number}){return <svg width={size} height={size} viewBox="0 0 40 40" aria-label="GepPao logo mark" role="img"><circle cx="20" cy="20" r="19" fill="#1E3A29"/><text x="18.5" y="28" textAnchor="middle" fill="#fff" fontFamily="Google Sans,Arial,sans-serif" fontSize="29" fontWeight="500">g</text><circle cx="25.5" cy="20.5" r="2.4" fill="#B3592C"/></svg>}
+import Image from 'next/image';
+
+type Props={size?:number;variant?:'app'|'light'};
+export function Logo({size=48,variant='app'}:Props){return <Image src={variant==='light'?'/brand/geppao-mark-light.svg':'/brand/geppao-icon.svg'} width={size} height={size} alt="GepPao"/>}
