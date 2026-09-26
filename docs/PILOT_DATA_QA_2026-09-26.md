@@ -83,9 +83,11 @@ The Thai PDPC publishes privacy-notice resources; the GPPC example includes rete
 
 ## Google OAuth
 
-- Provider redirect to Google works.
-- End-to-end callback and return-path validation requires one real user login and any 2-step verification demanded by Google.
-- Do not mark this launch gate complete until the production session returns successfully to GepPao and an authenticated profile/session is visible.
+- **PASS on 2026-09-26.**
+- Root cause found: Supabase `Site URL` was still `http://localhost:3000` and the Production callback was absent from the redirect allowlist.
+- Fixed `Site URL` to `https://geppao.vercel.app`.
+- Added `https://geppao.vercel.app/auth/callback` to Redirect URLs.
+- Completed a real Google login; Supabase returned to `https://geppao.vercel.app/trips`, the authenticated page rendered, and the logout control was visible.
 
 ## Import recommendation
 
@@ -104,6 +106,6 @@ Do not run a blind workbook import. Prepare a transaction containing only the ve
 
 1. Written image permission or license evidence for each public cover.
 2. Owner confirmation for the 9 review records.
-3. Real Google login callback test.
-4. Legal controller identity and Thai counsel approval.
-5. Production QA after reviewed data changes are applied.
+3. Legal controller identity and Thai counsel approval.
+4. Owner confirmation for unresolved operational fields.
+5. Final Production QA after media/legal decisions are completed.
