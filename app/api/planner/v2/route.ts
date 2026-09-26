@@ -146,6 +146,21 @@ export async function POST(request:Request){
   const candidatePool=fullForMode.length?fullForMode:partialForMode;
   const usingPartialData=!fullForMode.length;
   if(!candidatePool.length){
+    if(req.pet||req.family){
+      const requestedConstraints=[
+        req.pet?'รองรับสัตว์เลี้ยง':'',
+        req.family?'เหมาะกับครอบครัวและเด็ก':'',
+      ].filter(Boolean).join(' และ ');
+      return NextResponse.json({
+        error:`ยังไม่มีสถานที่ Published ที่ยืนยันว่า${requestedConstraints}และมีข้อมูลพร้อมสำหรับสร้างแผนทริป`,
+        dataReadiness:readiness,
+        constraintGap:{
+          petFriendly:req.pet,
+          childFriendly:req.family,
+        },
+        nextStep:'ยืนยันความเหมาะสม พิกัด รายละเอียด และระยะเวลาของสถานที่ก่อนแนะนำให้ผู้เดินทาง',
+      },{status:422});
+    }
     return NextResponse.json({error:'ยังไม่มีสถานที่ที่มีพิกัด รายละเอียด และระยะเวลาพอสำหรับสร้างแผนทริป',dataReadiness:readiness,nextStep:'เพิ่มพิกัด รายละเอียด และระยะเวลาที่แนะนำให้กับสถานที่อย่างน้อยหนึ่งรายการ'},{status:422});
   }
 
