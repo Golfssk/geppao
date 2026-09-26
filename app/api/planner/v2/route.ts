@@ -60,6 +60,10 @@ function hasUsableHours(place:any){
 function hasUsablePrice(place:any){
   return (place.price_items??[]).some((price:any)=>price.amount_min!=null&&Number.isFinite(Number(price.amount_min)));
 }
+function hasResolvedPriceDecision(place:any){
+  if(place.price_data_status==='available')return hasUsablePrice(place);
+  return ['free','missing','not_applicable'].includes(place.price_data_status);
+}
 function isPlannerReadyPlace(place:any){
   const needsHours=['restaurant','cafe','attraction','activity'].includes(place.place_type);
   return hasCoordinate(place.latitude)
@@ -67,7 +71,7 @@ function isPlannerReadyPlace(place:any){
     && hasText(place.description)
     && Number.isFinite(Number(place.recommended_duration_minutes))
     && Number(place.recommended_duration_minutes)>0
-    && hasUsablePrice(place)
+    && hasResolvedPriceDecision(place)
     && (!needsHours||hasUsableHours(place));
 }
 function isPlannerReadyEvent(event:any, req:{startDate?:string;endDate?:string}){
@@ -88,7 +92,7 @@ function plannerReadinessSummary(places:any[], eligible:any[]){
       missingCoordinates:eligible.filter((p:any)=>!hasCoordinate(p.latitude)||!hasCoordinate(p.longitude)).length,
       missingDescription:eligible.filter((p:any)=>!hasText(p.description)).length,
       missingDuration:eligible.filter((p:any)=>!Number.isFinite(Number(p.recommended_duration_minutes))||Number(p.recommended_duration_minutes)<=0).length,
-      missingPrice:eligible.filter((p:any)=>!hasUsablePrice(p)).length,
+      missingPriceDecision:eligible.filter((p:any)=>!hasResolvedPriceDecision(p)).length,
       missingHours:eligible.filter((p:any)=>['restaurant','cafe','attraction','activity'].includes(p.place_type)&&!hasUsableHours(p)).length,
     }
   };
@@ -104,7 +108,7 @@ export async function POST(request:Request){
   const supabase=await createClient();
 
   const [{data:places,error:placeError},{data:events,error:eventError}]=await Promise.all([
-    supabase.from('places').select('id,name,slug,description,place_type,address,latitude,longitude,max_group_size,pet_friendly,child_friendly,recommended_duration_minutes,place_hours(day_of_week,open_time,close_time,is_closed),price_items(label,amount_min,amount_max,currency,price_unit,is_estimate)').eq('publication_status','published'),
+    supabase.from('places').select('id,name,slug,description,place_type,address,latitude,longitude,max_group_size,pet_friendly,child_friendly,recommended_duration_minutes,price_data_status,place_hours(day_of_week,open_time,close_time,is_closed),price_items(label,amount_min,amount_max,currency,price_unit,is_estimate)').eq('publication_status','published'),
     supabase.from('events').select('id,name,slug,description,address,temporary_venue_name,latitude,longitude,event_schedules(starts_at,ends_at,status),price_items(label,amount_min,amount_max,currency,price_unit,is_estimate)').eq('publication_status','published')
   ]);
   if(placeError)return NextResponse.json({error:placeError.message},{status:500});
