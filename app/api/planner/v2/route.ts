@@ -113,11 +113,28 @@ export async function POST(request:Request){
   const publishedPlaces=places??[];
   const eligible=publishedPlaces.filter((p:any)=>{
     if(p.max_group_size!=null&&Number(p.max_group_size)<req.travelers)return false;
-    if(req.pet&&p.pet_friendly===false)return false;
-    if(req.family&&p.child_friendly===false)return false;
+    // Pet/family requirements are hard constraints. Unknown suitability must
+    // not be treated as a match because that would invent operational facts.
+    if(req.pet&&p.pet_friendly!==true)return false;
+    if(req.family&&p.child_friendly!==true)return false;
     return true;
   });
   const readiness=plannerReadinessSummary(publishedPlaces,eligible);
+  if(!eligible.length&&(req.pet||req.family)){
+    const requestedConstraints=[
+      req.pet?'รองรับสัตว์เลี้ยง':'',
+      req.family?'เหมาะกับครอบครัวและเด็ก':'',
+    ].filter(Boolean).join(' และ ');
+    return NextResponse.json({
+      error:`ยังไม่มีสถานที่ Published ที่ยืนยันว่า${requestedConstraints}เพียงพอสำหรับสร้างแผนทริป`,
+      dataReadiness:readiness,
+      constraintGap:{
+        petFriendly:req.pet,
+        childFriendly:req.family,
+      },
+      nextStep:'ยืนยันข้อมูลความเหมาะสมของสถานที่ก่อนแนะนำให้ผู้เดินทาง',
+    },{status:422});
+  }
   const plannerReady=eligible.filter(isPlannerReadyPlace);
   const partialReady=eligible.filter((p:any)=>hasCoordinate(p.latitude)
     && hasCoordinate(p.longitude)
