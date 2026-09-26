@@ -1,6 +1,7 @@
 import { notFound } from 'next/navigation';
 import { createClient } from '@/lib/supabase/server';
 import { mapListing } from '@/lib/listings';
+import { isManagedPublicMediaUrl } from '@/lib/public-media';
 
 export default async function StayDetail({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params;
@@ -9,7 +10,7 @@ export default async function StayDetail({ params }: { params: Promise<{ slug: s
   if (error || !data) return notFound();
 
   const l = mapListing(data);
-  const images = l.images || [];
+  const images = (l.images || []).filter(isManagedPublicMediaUrl);
   const hasCoordinates = typeof l.latitude === 'number' && typeof l.longitude === 'number';
   const mapsUrl = l.googleMapsUrl || (hasCoordinates ? `https://www.google.com/maps?q=${l.latitude},${l.longitude}` : '');
 
