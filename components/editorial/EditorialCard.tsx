@@ -1,0 +1,5 @@
+import Link from 'next/link';
+import type {EditorialArticle} from '@/types/editorial';
+import {categoryLabels} from '@/lib/editorial';
+import styles from './Editorial.module.css';
+export function EditorialCard({article,featured=false}:{article:EditorialArticle;featured?:boolean}){return <article className={`${styles.card} ${featured?styles.featured:''}`}><Link href={`/stories/${article.slug}`} className={styles.visual} aria-label={article.title}>{article.coverImageUrl?<img src={article.coverImageUrl} alt={article.coverAltText??''}/>:<span>{article.destination?.name??categoryLabels[article.category]??'GepPao'}</span>}</Link><div className={styles.body}><div className={styles.meta}><span>{categoryLabels[article.category]??article.category}</span>{article.destination&&<span>{article.destination.name}</span>}{article.readingMinutes&&<span>{article.readingMinutes} นาที</span>}</div>{article.commercialType!=='organic'&&<span className={styles.disclosure}>{article.commercialType==='sponsored'?'เนื้อหาสนับสนุน':'มีลิงก์ Affiliate'}</span>}<h3><Link href={`/stories/${article.slug}`}>{article.title}</Link></h3>{article.excerpt&&<p>{article.excerpt}</p>}</div></article>}
