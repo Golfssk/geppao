@@ -24,3 +24,23 @@ jobs:
           cache: npm
       - run: npm ci
       - run: npm run check
+
+  migration-reset:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+      - run: npm ci
+      - name: Start local Postgres
+        run: npx supabase db start
+      - name: Rebuild schema from ordered migrations
+        run: npx supabase db reset --local --no-seed
+      - name: Lint rebuilt public schema
+        run: npx supabase db lint --local --schema public --level warning --fail-on error
+      - name: Stop local Postgres
+        if: always()
+        run: npx supabase stop --no-backup
