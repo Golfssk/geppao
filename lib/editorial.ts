@@ -1,0 +1,9 @@
+import type {DestinationCard,EditorialArticle} from '@/types/editorial';
+export const destinations:DestinationCard[]=[
+ {name:'เขาใหญ่',slug:'pak-chong-khao-yai',province:'นครราชสีมา',kicker:'ธรรมชาติ · คาเฟ่ · ครอบครัว',summary:'ฐานข้อมูลและ Planner พร้อมให้เริ่มจัดทริป',plannerReady:true,accent:'#17472d'},
+ {name:'พัทยา',slug:'pattaya',province:'ชลบุรี',kicker:'ทะเล · เมือง · กิจกรรม',summary:'กำลังเตรียมคู่มือและข้อมูลท้องถิ่น',plannerReady:false,accent:'#255f78'},
+ {name:'กาญจนบุรี',slug:'kanchanaburi',province:'กาญจนบุรี',kicker:'ธรรมชาติ · ประวัติศาสตร์ · Road trip',summary:'กำลังเตรียมคู่มือและข้อมูลท้องถิ่น',plannerReady:false,accent:'#80633f'},
+ {name:'นครนายก',slug:'nakhon-nayok',province:'นครนายก',kicker:'น้ำตก · กิจกรรม · เที่ยววันเดียว',summary:'กำลังเตรียมคู่มือและข้อมูลท้องถิ่น',plannerReady:false,accent:'#516b3f'}
+];
+export const categoryLabels:Record<string,string>={destination_guide:'คู่มือจุดหมาย',itinerary:'แผนเที่ยว',food_drink:'กินและดื่ม',stay:'ที่พัก',cafe:'คาเฟ่',activity:'กิจกรรม',event_news:'อีเวนต์และข่าว',travel_advice:'คำแนะนำเดินทาง',local_story:'เรื่องเล่าท้องถิ่น',deal:'ดีล'};
+export function mapArticle(row:any):EditorialArticle{return{id:row.id,title:row.title,slug:row.slug,excerpt:row.excerpt??null,category:row.category,tags:Array.isArray(row.tags)?row.tags:[],coverImageUrl:row.cover_approved_for_public?row.cover_image_url:null,coverAltText:row.cover_alt_text??null,readingMinutes:row.reading_minutes??null,featured:Boolean(row.is_featured),commercialType:row.commercial_type??'organic',sponsorName:row.sponsor_name??null,publishedAt:row.published_at??null,destination:row.destinations?{name:row.destinations.name,slug:row.destinations.slug}:null,author:row.editorial_authors?{displayName:row.editorial_authors.display_name,slug:row.editorial_authors.slug}:null};}

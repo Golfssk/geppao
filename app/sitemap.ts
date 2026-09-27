@@ -1,0 +1,4 @@
+import type {MetadataRoute} from 'next';
+import {destinations} from '@/lib/editorial';
+const base='https://geppao.vercel.app';
+export default function sitemap():MetadataRoute.Sitemap{const core:MetadataRoute.Sitemap=[{url:base,changeFrequency:'daily',priority:1},{url:`${base}/stories`,changeFrequency:'daily',priority:.9},{url:`${base}/go`,changeFrequency:'weekly',priority:.9},{url:`${base}/search`,changeFrequency:'weekly',priority:.8},{url:`${base}/planner`,changeFrequency:'weekly',priority:.9},{url:`${base}/events`,changeFrequency:'daily',priority:.7},{url:`${base}/contact`,changeFrequency:'monthly',priority:.5}];const destinationEntries:MetadataRoute.Sitemap=destinations.map(item=>({url:`${base}/go/${item.slug}`,changeFrequency:'weekly',priority:.8}));return core.concat(destinationEntries);}
