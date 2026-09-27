@@ -1,0 +1,18 @@
+# dependencies
+/node_modules
+
+# Next.js build output
+/.next
+/out
+
+# local environments and secrets
+.env
+.env.*
+!.env.example
+
+# local tooling
+*.tsbuildinfo
+*.log
+.DS_Store
+coverage/
+.supabase/
