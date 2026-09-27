@@ -1,4 +1,5 @@
 import { Hero } from '@/components/home/Hero';
+import { MapHero } from '@/components/home/MapHero';
 import { HostCTA } from '@/components/home/HostCTA';
 import { ListingCard } from '@/components/listing/ListingCard';
 import { createClient } from '@/lib/supabase/server';
@@ -16,6 +17,7 @@ export default async function Home() {
   return (
     <main>
       <Hero />
+      <MapHero />
       <section className="section">
         <div className="container">
           <div className="section-head">
