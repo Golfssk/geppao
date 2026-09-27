@@ -5,7 +5,9 @@ const EVENT_NAMES = new Set([
   'search', 'planner_run', 'planner_recommendation', 'trip_created',
   'add_to_trip', 'remove_from_trip', 'lock_item', 'unlock_item',
   'trip_recalculated', 'place_view', 'google_maps_opened', 'trip_shared',
-  'contact_clicked', 'event_interest',
+  'contact_clicked', 'event_interest', 'article_view', 'story_to_destination',
+  'story_to_planner', 'destination_view', 'affiliate_click',
+  'sponsored_content_view', 'newsletter_signup',
 ]);
 const SOURCES = new Set(['web', 'shared_trip', 'admin', 'business']);
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;

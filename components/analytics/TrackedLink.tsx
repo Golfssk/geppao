@@ -11,6 +11,7 @@ export function TrackedLink({
   tripId,
   placeId,
   eventId,
+  metadata,
   target,
 }: {
   href: string;
@@ -20,8 +21,9 @@ export function TrackedLink({
   tripId?: string;
   placeId?: string;
   eventId?: string;
+  metadata?: Record<string, string | number | boolean | null>;
   target?: string;
 }) {
   return <a href={href} className={className} target={target} rel={target === '_blank' ? 'noreferrer' : undefined}
-    onClick={() => void trackProductEvent({eventName, tripId, placeId, eventId})}>{children}</a>;
+    onClick={() => void trackProductEvent({eventName, tripId, placeId, eventId, metadata})}>{children}</a>;
 }

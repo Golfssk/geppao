@@ -1,4 +1,4 @@
-const MANAGED_BUCKET_PATHS=['/storage/v1/object/public/place-images/','/storage/v1/object/public/event-images/'];
+const MANAGED_BUCKET_PATHS=['/storage/v1/object/public/place-images/','/storage/v1/object/public/event-images/','/storage/v1/object/public/editorial-images/'];
 
 export function isManagedPublicMediaUrl(value:string|null|undefined):value is string{
   if(!value)return false;
