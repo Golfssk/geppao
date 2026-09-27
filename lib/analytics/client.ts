@@ -12,7 +12,14 @@ export type ProductEventName =
   | 'google_maps_opened'
   | 'trip_shared'
   | 'contact_clicked'
-  | 'event_interest';
+  | 'event_interest'
+  | 'article_view'
+  | 'story_to_destination'
+  | 'story_to_planner'
+  | 'destination_view'
+  | 'affiliate_click'
+  | 'sponsored_content_view'
+  | 'newsletter_signup';
 
 type ProductEvent = {
   eventName: ProductEventName;

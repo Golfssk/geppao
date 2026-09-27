@@ -69,12 +69,20 @@ export default async function AnalyticsPage() {
     .slice(0, 10);
   const plannerRuns = eventCounts.planner_run ?? 0;
   const tripsCreated = eventCounts.trip_created ?? 0;
+  const articleViews = eventCounts.article_view ?? 0;
+  const destinationViews = eventCounts.destination_view ?? 0;
+  const storyToPlanner = eventCounts.story_to_planner ?? 0;
   const plannerToTripPercent = plannerRuns ? Math.round(tripsCreated / plannerRuns * 1000) / 10 : 0;
+  const articleToPlannerPercent = articleViews ? Math.round(storyToPlanner / articleViews * 1000) / 10 : 0;
   const maxDaily = Math.max(1, ...daily.map(day => day.events));
 
   const totals: Array<[string, string | number]> = [
     ['Events', rows.length],
     ['ผู้ใช้/Session', uniqueActors],
+    ['Article views', articleViews],
+    ['Destination views', destinationViews],
+    ['Story → Planner', storyToPlanner],
+    ['Article → Planner', `${articleToPlannerPercent}%`],
     ['Search', eventCounts.search ?? 0],
     ['Planner runs', plannerRuns],
     ['Trips created', tripsCreated],
