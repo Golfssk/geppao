@@ -16,3 +16,6 @@
 .DS_Store
 coverage/
 .supabase/
+
+# Supabase local CLI state
+supabase/.temp/
