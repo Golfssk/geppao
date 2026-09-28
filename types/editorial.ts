@@ -1,3 +1,3 @@
 export type ArticleCategory='destination_guide'|'itinerary'|'food_drink'|'stay'|'cafe'|'activity'|'event_news'|'travel_advice'|'local_story'|'deal';
 export type EditorialArticle={id:string;title:string;slug:string;excerpt:string|null;category:ArticleCategory;tags:string[];coverImageUrl:string|null;coverAltText:string|null;readingMinutes:number|null;featured:boolean;commercialType:'organic'|'affiliate'|'sponsored';sponsorName:string|null;publishedAt:string|null;destination:{name:string;slug:string}|null;author:{displayName:string;slug:string}|null};
-export type DestinationCard={name:string;slug:string;province:string;kicker:string;summary:string;plannerReady:boolean;accent:string};
+export type DestinationCard={name:string;slug:string;province:string;kicker:string;summary:string;plannerReady:boolean;accent:string;imageSrc:string;imageAlt:string;imageCredit:string;imageSource:string;imageLicense:string;imageLicenseUrl:string};
