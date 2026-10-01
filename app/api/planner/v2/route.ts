@@ -6,6 +6,7 @@ type Price = {cost:number|null; status:PriceStatus; unit:string|null};
 type Coord = {latitude:number; longitude:number};
 type PlannerPreferences={tripMode?:'day_trip'|'overnight';pet?:boolean;family?:boolean;vibes?:string[]};
 const ALLOWED_VIBES=['ธรรมชาติ','คาเฟ่','อาหาร','ชิล','ถ่ายรูป','กิจกรรม','adventure'];
+const PILOT_DESTINATION_SLUG='pak-chong-khao-yai';
 
 const number=(value:string, pattern:RegExp)=>{const m=value.match(pattern);return m?Number(m[1].replace(/,/g,'')):undefined;};
 const hasText=(value:unknown)=>typeof value==='string'&&value.trim().length>0;
@@ -106,10 +107,14 @@ export async function POST(request:Request){
   if(body?.startDate&&body?.endDate&&body.endDate<body.startDate)return NextResponse.json({error:'วันสิ้นสุดต้องไม่ก่อนวันเริ่มเดินทาง'},{status:400});
   const req=parseRequest(text,body?.startDate,body?.endDate,body?.preferences??{});
   const supabase=await createClient();
+  const destinationSlug=String(body?.destinationSlug||PILOT_DESTINATION_SLUG);
+  const{data:destination,error:destinationError}=await supabase.from('destinations').select('id,name,slug').eq('slug',destinationSlug).maybeSingle();
+  if(destinationError)return NextResponse.json({error:destinationError.message},{status:500});
+  if(!destination)return NextResponse.json({error:'ยังไม่เปิดให้วางแผนทริปสำหรับจุดหมายนี้'},{status:422});
 
   const [{data:places,error:placeError},{data:events,error:eventError}]=await Promise.all([
-    supabase.from('places').select('id,name,slug,description,place_type,address,latitude,longitude,max_group_size,pet_friendly,child_friendly,recommended_duration_minutes,price_data_status,place_hours(day_of_week,open_time,close_time,is_closed),price_items(label,amount_min,amount_max,currency,price_unit,is_estimate)').eq('publication_status','published'),
-    supabase.from('events').select('id,name,slug,description,address,temporary_venue_name,latitude,longitude,event_schedules(starts_at,ends_at,status),price_items(label,amount_min,amount_max,currency,price_unit,is_estimate)').eq('publication_status','published')
+    supabase.from('places').select('id,name,slug,description,place_type,address,latitude,longitude,max_group_size,pet_friendly,child_friendly,recommended_duration_minutes,price_data_status,place_hours(day_of_week,open_time,close_time,is_closed),price_items(label,amount_min,amount_max,currency,price_unit,is_estimate)').eq('destination_id',destination.id).eq('publication_status','published'),
+    supabase.from('events').select('id,name,slug,description,address,temporary_venue_name,latitude,longitude,event_schedules(starts_at,ends_at,status),price_items(label,amount_min,amount_max,currency,price_unit,is_estimate)').eq('destination_id',destination.id).eq('publication_status','published')
   ]);
   if(placeError)return NextResponse.json({error:placeError.message},{status:500});
   if(eventError)return NextResponse.json({error:eventError.message},{status:500});
@@ -217,5 +222,5 @@ export async function POST(request:Request){
   const itinerary=routeDays.flatMap(day=>day.items.map((item:any,index:number)=>({day:day.day,type:item.type,name:item.name,duration:item.duration,startTime:index===0?'10:00':index===1?'14:00':'18:00'})));
   const missingPrice=selected.filter(x=>x.cost==null).length;
 
-  return NextResponse.json({plan:{input:text,travelers:req.travelers,budget:budget??null,budgetPerPerson:req.budgetPerPerson??null,startDate:req.startDate||null,endDate:req.endDate||null,nights:req.nights,tripMode:req.tripMode,preferences:{pet:req.pet,family:req.family,vibes:req.wants},totalEstimatedCost:total,budgetFit,costCoverage:missingPrice===0?'complete':total>0?'partial':'missing',items:selected,itinerary,days:routeDays,routeKm:routeDays.reduce((s,d)=>s+d.estimatedTravelKm,0),routeMinutes:routeDays.reduce((s,d)=>s+d.estimatedTravelMinutes,0),dataReadiness:readiness,limitations:[req.tripMode==='day_trip'?'ทริปวันเดียวจะไม่เลือกที่พักและไม่นับค่าใช้จ่ายค้างคืน':'',usingPartialData?'แผนนี้ใช้ข้อมูล Published ที่ยังไม่ครบทุกฟิลด์ จึงแสดงราคา/เวลาเปิด–ปิดที่ขาดอย่างโปร่งใส':'การจัดลำดับนี้เลือกเฉพาะสถานที่ Published ที่ผ่านเกณฑ์ข้อมูลพร้อมใช้ของ GepPao','เส้นทางเป็น Estimate จากพิกัดและความเร็วเฉลี่ย 35 km/h; ยังไม่ใช่เวลา Google Maps แบบ real-time',budgetFit===false?'ยอดประมาณการเกินงบที่ระบุ จึงควรปรับจำนวนกิจกรรม/ตัวเลือก':'','ควรตรวจสอบราคา เวลาเปิด–ปิด และรอบ Event ก่อนเดินทาง'].filter(Boolean)}});
+  return NextResponse.json({plan:{input:text,destination:{id:destination.id,name:destination.name,slug:destination.slug},travelers:req.travelers,budget:budget??null,budgetPerPerson:req.budgetPerPerson??null,startDate:req.startDate||null,endDate:req.endDate||null,nights:req.nights,tripMode:req.tripMode,preferences:{pet:req.pet,family:req.family,vibes:req.wants},totalEstimatedCost:total,budgetFit,costCoverage:missingPrice===0?'complete':total>0?'partial':'missing',items:selected,itinerary,days:routeDays,routeKm:routeDays.reduce((s,d)=>s+d.estimatedTravelKm,0),routeMinutes:routeDays.reduce((s,d)=>s+d.estimatedTravelMinutes,0),dataReadiness:readiness,limitations:[req.tripMode==='day_trip'?'ทริปวันเดียวจะไม่เลือกที่พักและไม่นับค่าใช้จ่ายค้างคืน':'',usingPartialData?'แผนนี้ใช้ข้อมูล Published ที่ยังไม่ครบทุกฟิลด์ จึงแสดงราคา/เวลาเปิด–ปิดที่ขาดอย่างโปร่งใส':'การจัดลำดับนี้เลือกเฉพาะสถานที่ Published ที่ผ่านเกณฑ์ข้อมูลพร้อมใช้ของ GepPao','เส้นทางเป็น Estimate จากพิกัดและความเร็วเฉลี่ย 35 km/h; ยังไม่ใช่เวลา Google Maps แบบ real-time',budgetFit===false?'ยอดประมาณการเกินงบที่ระบุ จึงควรปรับจำนวนกิจกรรม/ตัวเลือก':'','ควรตรวจสอบราคา เวลาเปิด–ปิด และรอบ Event ก่อนเดินทาง'].filter(Boolean)}});
 }
