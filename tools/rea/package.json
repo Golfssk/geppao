@@ -1,0 +1,13 @@
+{
+  "name": "geppao-rea-tooling",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Optional local REA CLI/MCP tooling; never bundled into GepPao or deployed to Supabase.",
+  "engines": {"node": "^24.11.0"},
+  "scripts": {
+    "rea": "rea",
+    "doctor": "rea doctor",
+    "mcp": "rea --mcp"
+  },
+  "dependencies": {"rea-agents": "6.4.0"}
+}

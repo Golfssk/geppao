@@ -1,0 +1,39 @@
+'use client';
+import Link from 'next/link';
+import {useLocale} from '@/components/i18n/LocaleProvider';
+import {stayCopy} from './copy';
+import {safeHttpsUrl, safePhone} from '@/lib/stays/presentation';
+import styles from './StayDetail.module.css';
+type Detail = {
+  id:string; slug:string; name:string; address:string|null; description:string|null;
+  phone:string|null; website_url:string|null; verification_status:string; last_verified_at:string|null;
+  pet_friendly:boolean|null; child_friendly:boolean|null; accessibility_supported:boolean|null;
+  parking_available:boolean|null; reservation_required:boolean;
+  accommodation:{check_in_time:string|null; check_out_time:string|null; maximum_guests:number|null}|null;
+  prices:{label:string;amount_min:number;amount_max:number|null;currency:string;price_unit:string;is_estimate:boolean}[];
+};
+export function StayDetail({place,images,mapUrl,searchContext}: {place:Detail;images:{image_url:string;alt_text:string|null}[];mapUrl:string|null;searchContext:string}) {
+  const {locale} = useLocale(), t = stayCopy[locale], en = locale==='en';
+  const query = new URLSearchParams(searchContext); query.set('lang',locale);
+  const backParams = new URLSearchParams(query); backParams.set('page','1');
+  const planner = new URLSearchParams({lang:locale,q:`${place.name} · ${query.get('guests')||'2'} ${en?'travelers':'คน'}`});
+  if(query.get('checkIn')){planner.set('startDate',query.get('checkIn')!);planner.set('endDate',query.get('checkOut')!);}
+  const nightly = place.prices.filter(p=>p.currency==='THB'&&p.price_unit==='night').sort((a,b)=>Number(a.amount_min)-Number(b.amount_min))[0];
+  const format = (price: number, currency: string) => {
+    try {return new Intl.NumberFormat(en?'en-GB':'th-TH',{style:'currency',currency}).format(price);} catch {return `${price.toLocaleString()} ${currency}`;}
+  };
+  const value = (v:boolean|null) => v===true?(en?'Supported':'รองรับ'):v===false?(en?'Not supported':'ไม่รองรับ'):(en?'Not recorded':'ยังไม่มีข้อมูล');
+  const units:Record<string,string> = en?{night:'night',room:'room',person:'person',group:'group',activity:'activity',item:'item',free:'free'}:{night:'คืน',room:'ห้อง',person:'คน',group:'กลุ่ม',activity:'กิจกรรม',item:'รายการ',free:'ฟรี'};
+  const map = safeHttpsUrl(mapUrl), phone = safePhone(place.phone), website = safeHttpsUrl(place.website_url);
+  return <div className={styles.wrap}>
+    <Link className={styles.back} href={`/stays?${backParams}`}>← {en?'Back to stays':'กลับไปค้นหาที่พัก'}</Link>
+    <header className={styles.header}><div><p className={styles.eyebrow}>{en?'LOCAL STAY':'ที่พักท้องถิ่น'}</p><h1>{place.name}</h1><p>{place.address||t.unknownAddress}</p></div><span className={styles.status}>{place.verification_status==='verified'?`✓ ${en?'Information verified':'ข้อมูลยืนยันแล้ว'}`:t.pending}</span></header>
+    <nav className={styles.anchors} aria-label={en?'Property sections':'ส่วนข้อมูลที่พัก'}><a href="#stay-overview">{en?'Overview':'ภาพรวม'}</a><a href="#stay-prices">{en?'Reference prices':'ราคาอ้างอิง'}</a><a href="#stay-facts">{en?'Property facts':'ข้อมูลที่พัก'}</a><a href="#stay-contact">{en?'Contact':'ติดต่อ'}</a></nav>
+    {images.length?<section className={styles.gallery} aria-label={en?'Approved property photos':'ภาพที่พักที่อนุมัติแล้ว'}>{images.slice(0,3).map((image,index)=><img className={index===0?styles.cover:''} key={image.image_url} src={image.image_url} alt={image.alt_text||place.name} loading={index===0?'eager':'lazy'}/>)}</section>:<div className={styles.noPhoto}><span aria-hidden>⌂</span><p>{t.noImage}</p></div>}
+    <div className={styles.layout}><div className={styles.main}>
+      <section className={styles.block} id="stay-overview"><h2>{en?'A little more about this stay':'รู้จักที่พักนี้อีกนิด'}</h2><p>{place.description||(en?'A verified description has not been recorded yet.':'ยังไม่มีคำอธิบายที่ยืนยันสำหรับที่พักนี้')}</p><small>{t.original}</small></section>
+      <section className={styles.block} id="stay-prices"><h2>{en?'Recorded prices, clearly explained':'ราคาอ้างอิง พร้อมเงื่อนไขที่รู้'}</h2><p className={styles.notice}>{t.contact} · {t.context}</p>{place.prices.length?<dl className={styles.prices}>{place.prices.map((price,index)=><div key={index}><dt>{price.label}</dt><dd><strong>{format(Number(price.amount_min),price.currency)}{price.amount_max!=null&&Number(price.amount_max)!==Number(price.amount_min)?` – ${format(Number(price.amount_max),price.currency)}`:''}</strong> / {units[price.price_unit]||price.price_unit}{price.is_estimate&&<small>{t.estimate}</small>}</dd></div>)}</dl>:<p>{t.unknownPrice}</p>}</section>
+      <section className={styles.block} id="stay-facts"><h2>{en?'Property facts':'ข้อมูลที่ควรรู้ก่อนเดินทาง'}</h2><dl className={styles.facts}>{[[t.pet,place.pet_friendly],[t.parking,place.parking_available],[t.accessible,place.accessibility_supported],[en?'Child friendly':'เหมาะกับเด็ก',place.child_friendly]].map(([label,flag])=><div key={String(label)}><dt>{label}</dt><dd>{value(flag as boolean|null)}</dd></div>)}<div><dt>{t.maxGuests}</dt><dd>{place.accommodation?.maximum_guests?`${place.accommodation.maximum_guests} ${t.people}`:(en?'Not recorded':'ยังไม่มีข้อมูล')}</dd></div><div><dt>{t.checkIn}</dt><dd>{place.accommodation?.check_in_time?.slice(0,5)||(en?'Not recorded':'ยังไม่มีข้อมูล')}</dd></div><div><dt>{t.checkOut}</dt><dd>{place.accommodation?.check_out_time?.slice(0,5)||(en?'Not recorded':'ยังไม่มีข้อมูล')}</dd></div></dl></section>
+    </div><aside className={styles.side}><section className={styles.block} id="stay-contact"><p className={styles.eyebrow}>{t.reference}</p>{nightly?<p className={styles.price}>{format(Number(nightly.amount_min),'THB')} <span>{t.night}</span></p>:<h2>{t.unknownPrice}</h2>}{nightly?.is_estimate&&<p>{t.estimate}</p>}<p className={styles.notice}>{t.contact}</p><div className={styles.actions}>{phone&&<a className="btn btn-primary" href={phone}>{en?'Call property':'โทรหาที่พัก'}</a>}{website&&<a className="btn btn-sage" href={website} target="_blank" rel="noopener noreferrer">{en?'Property website ↗':'เว็บไซต์ที่พัก ↗'}</a>}{map&&<a className="btn btn-sage" href={map} target="_blank" rel="noopener noreferrer">{en?'Open map ↗':'เปิดแผนที่ ↗'}</a>}<Link className="btn btn-rust" href={`/planner?${planner}`}>{t.plan} →</Link></div>{place.last_verified_at&&<small>{en?'Information checked':'ตรวจข้อมูลล่าสุด'} {new Intl.DateTimeFormat(en?'en-GB':'th-TH',{timeZone:'Asia/Bangkok',dateStyle:'medium'}).format(new Date(place.last_verified_at))}</small>}<p className={styles.footnote}>{en?'Planning only. No room reservation or payment is made here.':'สำหรับวางแผนเท่านั้น หน้านี้ยังไม่รับจองห้องหรือชำระเงิน'}</p></section></aside></div>
+  </div>;
+}
