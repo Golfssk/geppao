@@ -1,6 +1,4 @@
-import Link from 'next/link';
-import styles from '@/components/host/HostLanding.module.css';
-
-const benefits=['ลงประกาศและสร้างหน้า Listing ฟรี','รับช่องทางติดต่อจากนักเดินทาง','มีโอกาสถูกเลือกเข้า Trip Planner','แก้ไขข้อมูล รูป ราคา และเวลาเปิด–ปิดได้','ไม่มีค่ารายเดือนในช่วงสร้างเครือข่าย'];
-
-export default function Host(){return <main className="page"><section className={styles.hero}><div className={`container ${styles.heroInner}`}><p className="eyebrow">GEPPAO FOR PARTNERS</p><h1>ลงประกาศฟรี แล้วเริ่มสร้าง demand ไปด้วยกัน</h1><p>เปิดพื้นที่ให้เจ้าของที่พักและธุรกิจท้องถิ่นเข้าร่วมโดยไม่มีค่ารายเดือน เพื่อให้ GepPao มีข้อมูลจริงสำหรับ Search และ Trip Planner และช่วยให้นักเดินทางค้นพบสถานที่ของคุณได้ง่ายขึ้น</p><div className={styles.heroActions}><Link href="/contact" className="btn btn-primary">ลงทะเบียนที่พักฟรี</Link><Link href="/host/login?next=%2Fbusiness%2Fplaces" className="btn btn-outline">เข้าสู่ระบบเจ้าของที่พัก</Link></div></div></section><div className="container section"><section className={styles.freePlan}><div><span className={styles.badge}>FREE DURING EARLY ACCESS</span><h2>เริ่มต้นฟรี ไม่มีแพ็กเกจรายเดือน</h2><p>เราให้ความสำคัญกับจำนวนและคุณภาพของสถานที่ก่อนการสร้างรายได้ ค่าบริการในอนาคตจะเกิดขึ้นเฉพาะฟีเจอร์เสริมที่ให้คุณค่าเพิ่ม และจะแจ้งล่วงหน้าอย่างชัดเจน</p></div><ul className={styles.features}>{benefits.map(item=><li key={item}>✓ {item}</li>)}</ul><Link href="/contact" className="btn btn-primary">สมัครเข้าร่วมฟรี</Link></section><section className={styles.note}><h2>หลักการของโมเดลช่วงเริ่มต้น</h2><p>การจ่ายเงินจะไม่ซื้ออันดับแบบตัดความเกี่ยวข้องของผู้ใช้ ช่วงนี้ทุกสถานที่แข่งขันด้วยข้อมูลที่ครบ ความน่าเชื่อถือ และความเหมาะสมกับทริป</p></section></div></main>}
+import type {Metadata} from 'next';
+import {HostLanding} from '@/components/host/HostLanding';
+export const metadata:Metadata={title:'เจ้าของที่พัก · GepPao for Hosts',description:'Prepare accurate place information, create a draft and submit for review. ลงประกาศสำหรับเจ้าของที่พักและธุรกิจท้องถิ่น'};
+export default function Host(){return <HostLanding/>;}
