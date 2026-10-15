@@ -29,3 +29,9 @@ The live Supabase schema is the source of truth. Migrations are additive: preser
 - `npm run test:stays` covers input validation, literal search safety, pagination, nightly-price semantics, relation shapes, and RLS-preserving SQL on a synthetic PGlite schema.
 - See `docs/STAY_DISCOVERY_ARCHITECTURE.md` for release gates and limitations and `docs/AGODA_PUBLIC_UX_RESEARCH.md` for the external reference scope.
 - Optional local reverse-engineering tools live in `tools/rea`; they are not application dependencies or a Supabase integration.
+
+## Source-backed Place intake (pending rollout)
+
+- Admin queue: `/admin/imports`; only owner-authorized/licensed/field-research submissions, never Google Maps dumps.
+- Review `docs/PLACE_INTAKE_SCHEMA_AUDIT.md` and `docs/PLACE_INTAKE_RUNBOOK.md` before applying additive migrations 029/030. Existing live environments must not replay old migrations based only on missing history entries.
+- `npm run test:intake` tests the ordered SQL chain in isolated PGlite, guarded publication/media state, Storage RLS, duplicate review, atomic Draft acceptance and a synthetic five-type pilot. Hosted Supabase and actual rights-cleared pilot checks remain rollout gates.
