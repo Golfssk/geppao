@@ -28,9 +28,9 @@ The previous `search_public_stays` API/RPC is retained for compatibility. No Goo
 
 ## Delivery / release
 
-This is stacked on the unmerged Place-intake branch because secondary-category search requires migration 030. Review/merge the foundation first, then retarget this change to main as appropriate; do not merge/promote automatically. Historical migrations 001–030 are unchanged, and 031 has not been applied to any hosted database.
+Foundation PR #92 was merged before this change was retargeted to main. After being informed of the lack of independent staging, the owner authorized an existing-free-project rollout without paid resources. Reviewed additive deltas 028–031 were applied atomically to the connected target before the new app deploy; historical files are unchanged. Exact affected-record comparisons confirmed existing fields were preserved, and hosted anonymous-role SQL verified all seven categories.
 
-Before hosted rollout, complete `STAGING_READINESS.md`. The inspected live target lacks both the previous stay-search and intake prerequisites, and Preview's DB binding could not be verified. Until migrations are installed on the correct isolated target, the new page should display an unavailable state rather than pretending a Preview build proves working live search.
+See `STAGING_READINESS.md` for the current rollout evidence and the preserved historical blocker. Independent staging was not created; Preview environment settings remain inaccessible, and actual signed-in Admin/owner Storage smoke tests remain outstanding. A passing build or SQL role test is not a claim that every hosted workflow was exercised.
 
 ## Verification record
 

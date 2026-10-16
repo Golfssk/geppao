@@ -1,4 +1,26 @@
-# Staging readiness: read-only inspection
+# Existing free-project rollout and staging inspection
+
+## Owner-authorized existing-target rollout
+
+After the initial staging blocker was explained, the owner requested proceeding on the existing free project. No staging project, paid branch, subscription upgrade, environment change or paid service was created. This is an explicitly accepted exception to the earlier staging gate, not a claim that independent staging now exists.
+
+- Rechecked actual target definitions and confirmed all prerequisite columns; the new search/intake objects were absent.
+- Saved affected-table records plus function/policy/trigger definitions and privilege snapshots securely outside Git. This is a targeted recovery snapshot, not a full database, Auth/Storage byte backup or PITR service.
+- Applied only reviewed repository deltas 028–031 in one transaction, with lock/statement timeouts, recorded as `reconcile_public_search_and_intake_028_031`. Historical migrations 001–027 were not reset/replayed. No existing rows were rewritten/deleted, no publication status was changed and no fixtures were seeded.
+- Exact pre/post JSON comparison (excluding newly added nullable columns) confirmed all original fields unchanged: 187 Places, 6 Events, 189 Place images, 6 Event images and 29 accommodation details.
+- Hosted anonymous-role SQL exercised all seven catalog categories; every returned item was published and pages were bounded to 12. Published counts at this inspection: 93 total, including 29 stays, 28 restaurants, 20 cafes, 6 attractions, 4 activities and 6 Events. These are existing records, including demo content; they are not a verified real-business inventory.
+- Latest full local `npm run check`: 163 tests passed, zero failed; typecheck, 31 migration checksums and production build passed.
+- Security advisor returned warnings for intentionally callable SECURITY DEFINER entrypoints and disabled leaked-password protection, but no RLS-disabled-new-table finding. Function grants alone do not prove missing internal authorization; new intake RPCs retain Admin checks. Do not blindly revoke the anonymous trip-share or analytics RPCs.
+
+### Remaining verification and recovery limits
+
+Preview environment configuration access remains 403; no secrets were retrieved and its database binding was not independently verified from settings. Production deployment/HTTP checks must be reported separately. Real signed-in Admin/owner and Storage API overwrite/delete smoke tests have not been completed; no test accounts or synthetic records were inserted in the hosted project. Existing public buckets are not made private by these migrations.
+
+For an app regression, first revert/roll back the app deploy while preserving additive database objects and newly collected data. A manual, reviewed guard/policy/function recovery script is stored with the private recovery snapshots; it is not automatically executed and does not drop new intake tables/columns. Do not reset or run broad destructive rollback SQL.
+
+---
+
+## Historical read-only staging inspection
 
 ## Result
 
