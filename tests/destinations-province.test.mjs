@@ -29,7 +29,7 @@ test('owner curated Pak Chong slots preserve precise source points and reproduci
  assert.equal(p.places[2].name,'อุทยานแห่งชาติเขาใหญ่');assert.equal(p.places[2].id,'node/5518427849');assert.match(p.places[2].locationNoteEn,/checkpoint/);
  assert.equal(p.places[3].name,'บ่อน้ำผุดธรรมชาติ');assert.equal(p.places[3].id,'node/2525136422');assert.equal(p.places[3].kind,'spring');
  assert.match(read('scripts/build-province-maps.py'),/Curated point outside province/);
- const provinces=JSON.parse(read('lib/destinations/provinces.json'));assert.equal(provinces.find(p=>p.id==='nakhon-ratchasima').region,'east');assert.equal(provinces.find(p=>p.id==='khon-kaen').region,'northeast');
+ const provinces=JSON.parse(read('lib/destinations/provinces.json'));assert.equal(provinces.find(p=>p.id==='nakhon-ratchasima').region,'northeast');assert.equal(provinces.find(p=>p.id==='khon-kaen').region,'northeast');
 });
 test('close numbered markers separate without mutating geographic anchors',async()=>{
  const {layoutPlacePins}=await import('../lib/destinations/province-map.ts');

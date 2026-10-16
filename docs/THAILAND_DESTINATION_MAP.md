@@ -65,9 +65,9 @@ Three motion tests cover fit, easing/endpoints and integration safeguards (197 r
 
 ### Owner-approved Pak Chong refinement
 
-Korat / Pak Chong–Khao Yai uses the **East / ตะวันออก** discovery group. This is
-an editorial discovery grouping, not a change to administrative geography;
-other Northeast provinces keep their existing group. Curated source-coordinate
+Korat / Pak Chong–Khao Yai belongs to **Northeast / ตะวันออกเฉียงเหนือ**.
+The owner corrected the earlier East grouping; the Thai Northeast label is now
+ตะวันออกเฉียงเหนือ rather than อีสาน. Other provinces are unchanged. Curated source-coordinate
 slots live in `lib/destinations/curated-places.json` and are applied by the map
 builder after automatic selection. Slot 3 identifies the park's northern
 checkpoint, slot 4 an OSM-mapped spring; see the public license notes for naming

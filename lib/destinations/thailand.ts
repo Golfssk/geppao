@@ -1,6 +1,6 @@
 import provinces from './provinces.json' with {type:'json'};
 import geography from './thailand-shapes.json' with {type:'json'};
-export const regions=[{id:'all',th:'ทั้งประเทศ',en:'All Thailand'},{id:'north',th:'เหนือ',en:'North'},{id:'northeast',th:'อีสาน',en:'Northeast'},{id:'central',th:'กลาง',en:'Central'},{id:'east',th:'ตะวันออก',en:'East'},{id:'west',th:'ตะวันตก',en:'West'},{id:'south',th:'ใต้',en:'South'}] as const;
+export const regions=[{id:'all',th:'ทั้งประเทศ',en:'All Thailand'},{id:'north',th:'เหนือ',en:'North'},{id:'northeast',th:'ตะวันออกเฉียงเหนือ',en:'Northeast'},{id:'central',th:'กลาง',en:'Central'},{id:'east',th:'ตะวันออก',en:'East'},{id:'west',th:'ตะวันตก',en:'West'},{id:'south',th:'ใต้',en:'South'}] as const;
 export type Region=typeof regions[number]['id'];
 export type Province=typeof provinces[number];
 export const provinceData=provinces;

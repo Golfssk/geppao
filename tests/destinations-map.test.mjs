@@ -15,3 +15,11 @@ test('every regional viewport contains its province bounds',()=>{assert.equal(re
 test('province CTA preserves locale and uses honest catalog text search, not fake ids',()=>{const p=provinceData.find(p=>p.id==='nakhon-nayok');const u=new URL(provinceSearchHref(p,'en'),'https://test.invalid');assert.equal(u.pathname,'/search');assert.equal(u.searchParams.get('q'),'นครนายก');assert.equal(u.searchParams.get('lang'),'en');assert.equal(u.searchParams.get('type'),'all');assert.equal(u.searchParams.has('destination'),false)});
 test('map and list use same source and have non-hover alternatives',()=>{const code=read('components/destinations/ThailandExplorer.tsx');assert.match(code,/onPointerEnter/);assert.match(code,/pointerType==='mouse'/);assert.match(code,/onClick/);assert.match(code,/<select/);assert.match(code,/mode==='map'/);assert.match(code,/type="search"/);assert.match(code,/aria-pressed/);assert.doesNotMatch(code,/dangerouslySetInnerHTML|supabase|service_role|localStorage|geolocation/)});
 test('geographic attribution is packaged with public derived database and no external map API',()=>{const p=JSON.parse(read('public/maps/thailand-provinces.json'));assert.equal(p.provinces.length,77);assert.equal(p.license,'ODbL-1.0');assert.equal(read('lib/destinations/thailand-shapes.json'),read('public/maps/thailand-provinces.json'));assert.match(read('public/maps/THAILAND_MAP_LICENSE.md'),/OpenStreetMap contributors/);assert.match(read('public/maps/THAILAND_MAP_LICENSE.md'),/ODbL-1.0/);assert.doesNotMatch(read('components/destinations/ThailandExplorer.tsx'),/maps\.googleapis|mapbox|api[_-]?key/i)});
+
+test('Northeast uses the full Thai label and includes Korat, not East',()=>{
+ assert.equal(regions.find(r=>r.id==='northeast').th,'ตะวันออกเฉียงเหนือ');
+ assert.equal(regions.find(r=>r.id==='northeast').en,'Northeast');
+ assert.ok(filterProvinces('northeast').some(p=>p.id==='nakhon-ratchasima'));
+ assert.ok(!filterProvinces('east').some(p=>p.id==='nakhon-ratchasima'));
+ assert.equal(filterProvinces('northeast').length,20);
+});
