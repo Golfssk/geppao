@@ -62,3 +62,15 @@ Province activation in map view now keeps the existing SVG mounted during a 720m
 Only the clicked province is preloaded in parallel. A new selection cancels the prior frame loop; changing map/list/region restores the overview camera and cancels pending navigation. Unmount cleanup cancels frames. Hover never navigates, and map activation no longer triggers the old abrupt scroll-to-section. List/featured choices retain intentional scroll-to-panel behavior. Reduced-motion preference skips both the camera flight and reveal animation. No geographic/source/database changes.
 
 Three motion tests cover fit, easing/endpoints and integration safeguards (197 regression tests total). Browser checks verified intermediate camera frames on desktop and touch mobile, final target, no overflow/page errors, reduced-motion instant navigation, cancel/restore and latest-selection-wins behavior. Mid-flight, final desktop and mobile views were visually inspected.
+
+### Owner-approved Pak Chong refinement
+
+Korat / Pak Chong–Khao Yai uses the **East / ตะวันออก** discovery group. This is
+an editorial discovery grouping, not a change to administrative geography;
+other Northeast provinces keep their existing group. Curated source-coordinate
+slots live in `lib/destinations/curated-places.json` and are applied by the map
+builder after automatic selection. Slot 3 identifies the park's northern
+checkpoint, slot 4 an OSM-mapped spring; see the public license notes for naming
+and precision. Nearby numbered pins use screen-space separation with leader
+lines, without changing source coordinates. Landmark cards have clearer selected
+and keyboard-focus states.

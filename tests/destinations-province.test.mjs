@@ -20,3 +20,19 @@ test('terrain tile requests are bounded and exactly aligned with the local proje
 test('zoom clamps to province extent and returns to fit without drifting',()=>{for(const p of maps){assert.deepEqual(zoomViewBox(p.viewBox,1),p.viewBox);for(const z of [0,2,4,10]){const [x,y,w,h]=zoomViewBox(p.viewBox,z,[1e9,-1e9]);const [bx,by,bw,bh]=p.viewBox;assert.ok(x>=bx&&y>=by&&x+w<=bx+bw+1e-9&&y+h<=by+bh+1e-9);assert.ok(w>=bw/4)}}});
 test('district labels are decluttered while all districts remain selectable',()=>{const p=maps.find(p=>p.id==='bangkok');const labels=districtLabels(p,p.viewBox,{width:350,height:435},false);assert.ok(labels.length<p.districts.length);assert.equal(new Set(labels.map(d=>d.id)).size,labels.length);const code=read('components/destinations/ProvinceExplorer.tsx');assert.match(code,/data\.districts\].sort/);assert.match(code,/AbortController/);assert.match(code,/role="status"/);assert.match(code,/allTilesFailed/);assert.match(code,/setAttempt/);assert.match(code,/aria-pressed/);assert.doesNotMatch(code,/supabase|service_role|localStorage|geolocation|api[_-]?key|dangerouslySetInnerHTML/i)});
 test('licenses, complete source collections and generation script are shipped',()=>{const text=read('public/maps/PROVINCE_MAP_LICENSE.md');for(const q of ['CC BY 3.0 IGO','ODbL-1.0','Esri','2019','not verified','Kongvut'])assert.ok(text.includes(q));assert.match(read('public/maps/THAI_NAMES_LICENSE.txt'),/MIT License/);assert.match(read('scripts/build-province-maps.py'),/nameAliases/);assert.equal(readdirSync(new URL('../public/maps/provinces/',import.meta.url)).filter(f=>f.endsWith('.json')).length,78)});
+test('owner curated Pak Chong slots preserve precise source points and reproducible overrides',()=>{
+ const p=maps.find(p=>p.id==='nakhon-ratchasima'),curated=JSON.parse(read('lib/destinations/curated-places.json'))[p.id];
+ const district=p.districts.find(d=>d.name==='ปากช่อง');
+ const rings=[...district.d.matchAll(/M([^Z]+)Z/g)].map(m=>m[1].split('L').map(v=>v.split(',').map(Number)));
+ const inside=(x,y,r)=>{let hit=false;for(let i=0,j=r.length-1;i<r.length;j=i++){const a=r[i],b=r[j];if((a[1]>y)!=(b[1]>y)&&x<(b[0]-a[0])*(y-a[1])/(b[1]-a[1])+a[0])hit=!hit}return hit};
+ for(const o of curated){const q=p.places[o.slot-1];for(const [k,v] of Object.entries(o.place))assert.deepEqual(q[k],v);assert.ok(rings.some(r=>inside(q.x,q.y,r)));const mx=(q.lon+180)/360,my=(1-Math.asinh(Math.tan(q.lat*Math.PI/180))/Math.PI)/2;assert.equal(q.x,Math.round((mx-p.origin[0])/p.unit*100)/100);assert.equal(q.y,Math.round((my-p.origin[1])/p.unit*100)/100)}
+ assert.equal(p.places[2].name,'อุทยานแห่งชาติเขาใหญ่');assert.equal(p.places[2].id,'node/5518427849');assert.match(p.places[2].locationNoteEn,/checkpoint/);
+ assert.equal(p.places[3].name,'บ่อน้ำผุดธรรมชาติ');assert.equal(p.places[3].id,'node/2525136422');assert.equal(p.places[3].kind,'spring');
+ assert.match(read('scripts/build-province-maps.py'),/Curated point outside province/);
+ const provinces=JSON.parse(read('lib/destinations/provinces.json'));assert.equal(provinces.find(p=>p.id==='nakhon-ratchasima').region,'east');assert.equal(provinces.find(p=>p.id==='khon-kaen').region,'northeast');
+});
+test('close numbered markers separate without mutating geographic anchors',async()=>{
+ const {layoutPlacePins}=await import('../lib/destinations/province-map.ts');
+ const p=maps.find(p=>p.id==='nakhon-ratchasima'),before=JSON.stringify(p.places);
+ for(const unit of [1,2,4]){const pins=layoutPlacePins(p.places,unit);assert.equal(pins.length,p.places.length);for(let i=0;i<pins.length;i++)for(let j=0;j<i;j++)assert.ok(Math.hypot(pins[i].x-pins[j].x,pins[i].y-pins[j].y)>=27.9*unit)}assert.equal(JSON.stringify(p.places),before);
+});

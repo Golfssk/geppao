@@ -80,6 +80,7 @@ for e in poiData['elements']:
  score=10*bool(t.get('wikidata'))+5*bool(t.get('wikipedia'))+3*(kind in ['waterfall','dam','visitor'])
  if any(word in name for word in ['ขุนด่าน','เอราวัณ','เขาใหญ่']):score+=200 if kind in ['waterfall','dam','visitor'] else 100
  poiGroups[p['id']].append({'id':str(e['type'])+'/'+str(e['id']),'name':name.split(';')[0],'nameEn':nameEn.split(';')[0],'kind':kind,'lon':pt[0],'lat':pt[1],'coordinateType':'node' if e['type']=='node' else 'area-center','source':'https://www.openstreetmap.org/'+str(e['type'])+'/'+str(e['id']),'score':score})
+curated=json.load(open(root/'lib/destinations/curated-places.json'))
 index=[]
 for p in provs:
  ds=groups[p['id']];allps=[poly for d in ds for poly in d['polys']];b=bounds(allps);a=merc((b[0],b[3]));z=merc((b[2],b[1]));unit=max(z[0]-a[0],z[1]-a[1])/1000
@@ -98,6 +99,14 @@ for p in provs:
   if e['name'] in seen:continue
   seen.add(e['name']);e=dict(e);e.pop('score');e.update(dict(zip(['x','y'],proj((e['lon'],e['lat'])))));chosen.append(e)
   if len(chosen)==12:break
+ # Editorial slots retain exact source coordinates, validated against district geometry.
+ for override in curated.get(p['id'],[]):
+  entry=dict(override['place']);pt=(entry['lon'],entry['lat'])
+  if not within(pt,allps):raise ValueError(('Curated point outside province',p['id'],entry['id']))
+  entry.update(dict(zip(['x','y'],proj(pt))))
+  slot=override['slot']-1
+  if slot<0 or slot>=len(chosen):raise ValueError(('Invalid curated slot',slot))
+  chosen[slot]=entry
  vb=[-75,-75,round((z[0]-a[0])/unit+150,2),round((z[1]-a[1])/unit+200,2)]
  data={'id':p['id'],'sourceBoundaryId':'THA-ADM2-78962969','year':2019,'districtLicense':'CC-BY-3.0-IGO','placesLicense':'ODbL-1.0','projection':'WebMercator-normalized','origin':a,'unit':unit,'viewBox':vb,'districts':districts,'places':chosen,'osmSnapshot':poiData.get('osm3s',{}).get('timestamp_osm_base')}
  (out/(p['id']+'.json')).write_text(json.dumps(data,ensure_ascii=False,separators=(',',':'))+'\n');index.append({'id':p['id'],'districts':len(districts),'places':len(chosen)})

@@ -29,3 +29,15 @@ https://services.arcgisonline.com/ArcGIS/rest/services/Elevation/World_Hillshade
 Service attribution: Sources: Esri, Vantor, Airbus DS, USGS, NGA, NASA, CGIAR, N Robinson, NCEAS, NLS, OS, NMA, Geodatastyrelsen, Rijkswaterstaat, GSA, Geoland, FEMA, Intermap, and the GIS user community.
 
 Description, source information and terms: https://goto.arcgisonline.com/maps/Elevation/World_Hillshade . Terrain is a real hillshade backdrop, **not 3D terrain or a navigation elevation model**. It is clipped to the province district collection and aligned in Web Mercator. Tiles are loaded only after province drill-down, with at most 20 fit-level requests per selected province (not a bulk downloader). The user can turn the layer off. If tiles fail, local boundaries, selectors and points remain usable; the UI reports missing terrain. No provider account, paid plan or API key is created. Availability, licensing terms and provider limits should be rechecked before high-volume public deployment; this feature does not promise unlimited third-party service.
+
+## Curated Pak Chong slots
+
+`lib/destinations/curated-places.json` reproducibly overrides Korat slots 3–4,
+using unchanged OpenStreetMap node coordinates (ODbL-1.0; per-point snapshot included):
+
+- 3: Khao Yai National Park — node [5518427849](https://www.openstreetmap.org/node/5518427849), the northern / Pak Chong checkpoint, **not the park centre**. The list subtitle identifies this precision; this is not an access or opening-hours claim.
+- 4: Natural Spring — node [2525136422](https://www.openstreetmap.org/node/2525136422), tagged `natural=spring`. Its generic Thai/English display name is editorial, requested by the site owner; the source node is unnamed. No named attraction or verified listing is inferred.
+
+Both coordinates were checked inside the sourced Pak Chong district polygon.
+Nearby numbered markers may be separated in screen space; a leader line connects
+an offset marker to its unchanged geographic anchor.
