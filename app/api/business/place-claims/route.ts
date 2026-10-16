@@ -1,0 +1,9 @@
+import {NextResponse} from 'next/server';
+import {getBusinessContext} from '@/lib/business-access';
+import {sameOrigin,smallJson} from '@/lib/business-import/request';
+export async function POST(request:Request){
+ const{supabase,user,business}=await getBusinessContext();if(!user)return NextResponse.json({error:'กรุณาเข้าสู่ระบบ'},{status:401});if(!business)return NextResponse.json({error:'ไม่พบบัญชีธุรกิจ'},{status:403});
+ try{sameOrigin(request);const b=await smallJson(request);if(typeof b.placeId!=='string'||!/^[0-9a-f-]{36}$/i.test(b.placeId)||b.ownerConfirmed!==true)throw new Error('กรุณาเลือกสถานที่และยืนยันว่ามีอำนาจจัดการกิจการ');const phone=typeof b.phone==='string'?b.phone.trim():'';if(phone.length<8||phone.length>30)throw new Error('กรุณาใส่เบอร์ติดต่อกลับ 8–30 ตัวอักษร');const{data:place,error}=await supabase.from('places').select('id,name,slug,business_id').eq('id',b.placeId).eq('publication_status','published').maybeSingle();if(error)throw new Error('ตรวจสถานที่ไม่สำเร็จ');if(!place)return NextResponse.json({error:'ไม่พบสถานที่ที่เผยแพร่'},{status:404});if(place.business_id===business.id)return NextResponse.json({manageUrl:`/business/places/${place.id}/manage`});
+ const{error:saveError}=await supabase.from('leads').insert({user_id:user.id,action:'business_ownership_request',source:'business_link_import',contact_name:business.name.slice(0,100),contact_email:user.email??null,contact_phone:phone,message:`ขอสิทธิ์จัดการสถานที่: ${place.name}\nPlace ID: ${place.id}\nBusiness ID: ${business.id}\nผู้ส่งยืนยันว่ามีอำนาจจัดการกิจการ กรุณาตรวจหลักฐานก่อนเปลี่ยนเจ้าของ`});if(saveError)return NextResponse.json({error:'ส่งคำขอไม่สำเร็จ กรุณาลองใหม่'},{status:503});return NextResponse.json({accepted:true,message:'ส่งคำขอให้ทีม Gebpao ตรวจสอบแล้ว ยังไม่มีการเปลี่ยนเจ้าของหรือข้อมูลสถานที่'},{status:201});
+ }catch(e){return NextResponse.json({error:e instanceof Error?e.message:'ส่งคำขอไม่สำเร็จ'},{status:400})}
+}
