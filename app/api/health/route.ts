@@ -1,1 +1,28 @@
-import {NextResponse} from 'next/server';import {createClient} from '@/lib/supabase/server';export const dynamic='force-dynamic';export async function GET(){const configured=Boolean(process.env.NEXT_PUBLIC_SUPABASE_URL&&process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY);if(!configured)return NextResponse.json({status:'error',checks:{environment:false,database:false},message:'Supabase environment variables are missing'},{status:503});try{const s=await createClient();const checks=await Promise.all([s.from('destinations').select('id',{head:true,count:'exact'}),s.from('places').select('id',{head:true,count:'exact'}).eq('publication_status','published'),s.from('events').select('id',{head:true,count:'exact'}).eq('publication_status','published')]);const errors=checks.map(x=>x.error?.message??null);const ok=errors.every(x=>x===null);return NextResponse.json({status:ok?'ok':'degraded',checks:{environment:true,database:ok},counts:{destinations:checks[0].count??0,publishedPlaces:checks[1].count??0,publishedEvents:checks[2].count??0},errors:ok?undefined:errors},{status:ok?200:503})}catch(error){return NextResponse.json({status:'error',checks:{environment:true,database:false},message:error instanceof Error?error.message:'Unknown health check error'},{status:503})}}
+import {NextResponse} from 'next/server';
+import {createClient} from '@supabase/supabase-js';
+import {createHealthCheck} from '@/lib/health/status';
+
+export const dynamic = 'force-dynamic';
+const checkHealth = createHealthCheck({
+  isConfigured: () => Boolean(process.env.NEXT_PUBLIC_SUPABASE_URL && process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY),
+  probe: async signal => {
+    // Explicit anonymous client: health must not depend on the caller's cookies or role.
+    const client = createClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!, {
+      auth: {persistSession: false, autoRefreshToken: false, detectSessionInUrl: false},
+    });
+    const results = await Promise.all([
+      client.from('destinations').select('id', {head: true}).limit(1).abortSignal(signal),
+      client.from('places').select('id', {head: true}).eq('publication_status', 'published').limit(1).abortSignal(signal),
+      client.from('events').select('id', {head: true}).eq('publication_status', 'published').limit(1).abortSignal(signal),
+    ]);
+    // An empty public catalog is still reachable, not a database outage.
+    return results.every(result => !result.error);
+  },
+});
+export async function GET() {
+  const body = await checkHealth();
+  return NextResponse.json(body, {
+    status: body.status === 'ok' ? 200 : 503,
+    headers: {'Cache-Control': 'private, no-store', 'X-Robots-Tag': 'noindex, nofollow'},
+  });
+}
