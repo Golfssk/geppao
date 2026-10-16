@@ -1,3 +1,4 @@
+import {publicUrl} from '@/lib/intake/validation';
 import {NextResponse} from 'next/server';
 import {getAdminContext} from '@/lib/admin-access';
 
@@ -23,7 +24,11 @@ export async function PUT(request:Request,{params}:{params:Promise<{id:string}>}
   if (latitude === undefined || longitude === undefined || duration === undefined || !PRICE_STATUSES.has(priceDataStatus)) {
     return NextResponse.json({error:'ข้อมูลรูปแบบไม่ถูกต้อง'},{status:400});
   }
+  const contacts:Record<string,string|null>={};
+  try{for(const [key,column] of Object.entries({websiteUrl:'website_url',facebookUrl:'facebook_url',instagramUrl:'instagram_url',bookingUrl:'booking_url'})){if(key in body)contacts[column]=publicUrl(body[key])}}catch(error){return NextResponse.json({error:error instanceof Error?error.message:'URL ไม่ถูกต้อง'},{status:400})}
+  for(const[key,column]of Object.entries({phone:'phone',lineId:'line_id',email:'email'}))if(key in body)contacts[column]=nullableText(body[key],200);
   const {data,error} = await supabase.from('places').update({
+    ...contacts,
     description: nullableText(body.description,5000),
     address: nullableText(body.address,1000),
     latitude,

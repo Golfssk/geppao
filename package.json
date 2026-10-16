@@ -8,11 +8,12 @@
     "start": "next start",
     "typecheck": "tsc --noEmit",
     "lint": "tsc --noEmit",
-    "check": "npm run verify:migrations && npm run test:stays && npm run test:host && npm run typecheck && npm run build",
+    "check": "npm run verify:migrations && npm run test:stays && npm run test:host && npm run test:intake && npm run typecheck && npm run build",
     "verify:migrations": "node scripts/verify-migrations.mjs",
     "write:migration-manifest": "node scripts/verify-migrations.mjs --write",
     "test:stays": "node --experimental-strip-types --test tests/stays-*.test.mjs",
-    "test:host": "node --experimental-strip-types --test tests/host-*.test.mjs"
+    "test:host": "node --experimental-strip-types --test tests/host-*.test.mjs",
+    "test:intake": "node --experimental-strip-types --test tests/intake-*.test.mjs"
   },
   "dependencies": {
     "@supabase/ssr": "0.12.7",
