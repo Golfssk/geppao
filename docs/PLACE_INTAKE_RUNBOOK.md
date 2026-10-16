@@ -13,7 +13,7 @@ Only owner-authorized submissions, licensed datasets and Gebpao field research a
 3. Check possible duplicates: Google Place ID across destinations; normalized name/phone in the destination; same-type coordinates within 100 metres. These are suggestions, not proof of identity.
 4. Link to an existing reviewed suggestion without overwriting any fields; or create a new Draft when none match. For genuinely distinct co-located businesses, review ALL suggested IDs and record a reason. SQL rechecks under a transaction lock, so changed matches require a new review. An external identity cannot be overridden by a distinct-venue note.
 5. New Places are `draft` / `unverified`, with price status unknown and nullable amenities. Never interpret NULL as false/free. Import is transactional and retry-safe. A linked submission is not evidence that existing field values came from that submission.
-6. Use Admin curation to fill confirmed timing, prices (with units) and other missing data. Upload rights-cleared media separately, approve it, then moderate the Place. No batch auto-publish.
+6. For unclaimed Places, use Admin curation to fill confirmed timing, prices (with units) and other missing data. For owner-managed Places, Admin curation is read-only for profile/details/hours/prices; ask the owner to correct them through Business workspace. Admin can review and approve/revoke rights-cleared media on either kind of Place. Upload media separately, approve it, then moderate the Place. No batch auto-publish.
 
 ## Input contract
 
@@ -41,3 +41,9 @@ Do not attach raw HTML, image bytes, photo URLs, review dumps or an unbounded pr
 First run synthetic fixtures only in local isolated Postgres/PGlite. Then obtain a small real rights-cleared sample covering the requested categories. Stage each, verify duplicate handling, accept Drafts, compare stored values to evidence, and check they remain absent from anonymous public Search/Planner. Record Admin approvals separately. Do not claim pilot coverage or data completeness from a fixture.
 
 This change does not implement Google rating/Bayesian ranking, real-time prices/room inventory, automated scraping, or full-area business coverage. Secondary categories are stored but unified Search/Planner secondary-category filtering is not added in this release.
+
+## Admin review request contract
+
+Ordinary acceptance and linking may omit `distinct_reason` or send JSON null/blank; the API normalizes them to SQL NULL. A distinct-venue override still requires all current suggested IDs and a meaningful reason (at least 10 characters). Do not use an override to bypass an external-identity conflict.
+
+The owned-place review fix does not grant Admin owner-content overwrite access. Server endpoints retain their unclaimed-only guards; unauthorized accounts cannot access the review page or import API. Media deletion remains limited to supported Admin-uploaded paths. See `ADMIN_HOST_REA_SCOPE.md` for the management-system research scope and future implementation slices.
