@@ -1,0 +1,387 @@
+[
+ {
+  "id": "amnat-charoen",
+  "districts": 7,
+  "places": 0
+ },
+ {
+  "id": "ang-thong",
+  "districts": 7,
+  "places": 0
+ },
+ {
+  "id": "bangkok",
+  "districts": 50,
+  "places": 12
+ },
+ {
+  "id": "bueng-kan",
+  "districts": 8,
+  "places": 0
+ },
+ {
+  "id": "buri-ram",
+  "districts": 23,
+  "places": 1
+ },
+ {
+  "id": "chachoengsao",
+  "districts": 11,
+  "places": 0
+ },
+ {
+  "id": "chai-nat",
+  "districts": 8,
+  "places": 1
+ },
+ {
+  "id": "chaiyaphum",
+  "districts": 16,
+  "places": 6
+ },
+ {
+  "id": "chanthaburi",
+  "districts": 10,
+  "places": 5
+ },
+ {
+  "id": "chiang-mai",
+  "districts": 25,
+  "places": 12
+ },
+ {
+  "id": "chiang-rai",
+  "districts": 18,
+  "places": 12
+ },
+ {
+  "id": "chon-buri",
+  "districts": 11,
+  "places": 4
+ },
+ {
+  "id": "chumphon",
+  "districts": 8,
+  "places": 0
+ },
+ {
+  "id": "kalasin",
+  "districts": 18,
+  "places": 3
+ },
+ {
+  "id": "kamphaeng-phet",
+  "districts": 11,
+  "places": 3
+ },
+ {
+  "id": "kanchanaburi",
+  "districts": 13,
+  "places": 12
+ },
+ {
+  "id": "khon-kaen",
+  "districts": 26,
+  "places": 5
+ },
+ {
+  "id": "krabi",
+  "districts": 8,
+  "places": 12
+ },
+ {
+  "id": "lampang",
+  "districts": 13,
+  "places": 8
+ },
+ {
+  "id": "lamphun",
+  "districts": 8,
+  "places": 1
+ },
+ {
+  "id": "loei",
+  "districts": 14,
+  "places": 4
+ },
+ {
+  "id": "lopburi",
+  "districts": 11,
+  "places": 2
+ },
+ {
+  "id": "mae-hong-son",
+  "districts": 7,
+  "places": 8
+ },
+ {
+  "id": "maha-sarakham",
+  "districts": 13,
+  "places": 0
+ },
+ {
+  "id": "mukdahan",
+  "districts": 7,
+  "places": 2
+ },
+ {
+  "id": "nakhon-nayok",
+  "districts": 4,
+  "places": 3
+ },
+ {
+  "id": "nakhon-pathom",
+  "districts": 7,
+  "places": 3
+ },
+ {
+  "id": "nakhon-phanom",
+  "districts": 12,
+  "places": 1
+ },
+ {
+  "id": "nakhon-ratchasima",
+  "districts": 32,
+  "places": 5
+ },
+ {
+  "id": "nakhon-sawan",
+  "districts": 15,
+  "places": 1
+ },
+ {
+  "id": "nakhon-si-thammarat",
+  "districts": 23,
+  "places": 5
+ },
+ {
+  "id": "nan",
+  "districts": 15,
+  "places": 6
+ },
+ {
+  "id": "narathiwat",
+  "districts": 13,
+  "places": 1
+ },
+ {
+  "id": "nong-bua-lam-phu",
+  "districts": 6,
+  "places": 1
+ },
+ {
+  "id": "nong-khai",
+  "districts": 9,
+  "places": 0
+ },
+ {
+  "id": "nonthaburi",
+  "districts": 6,
+  "places": 2
+ },
+ {
+  "id": "pathum-thani",
+  "districts": 7,
+  "places": 4
+ },
+ {
+  "id": "pattani",
+  "districts": 12,
+  "places": 0
+ },
+ {
+  "id": "phangnga",
+  "districts": 8,
+  "places": 5
+ },
+ {
+  "id": "phatthalung",
+  "districts": 11,
+  "places": 1
+ },
+ {
+  "id": "phayao",
+  "districts": 9,
+  "places": 4
+ },
+ {
+  "id": "phetchabun",
+  "districts": 11,
+  "places": 4
+ },
+ {
+  "id": "phetchaburi",
+  "districts": 8,
+  "places": 4
+ },
+ {
+  "id": "phichit",
+  "districts": 12,
+  "places": 0
+ },
+ {
+  "id": "phitsanulok",
+  "districts": 9,
+  "places": 4
+ },
+ {
+  "id": "phra-nakhon-si-ayutthaya",
+  "districts": 16,
+  "places": 12
+ },
+ {
+  "id": "phrae",
+  "districts": 8,
+  "places": 4
+ },
+ {
+  "id": "phuket",
+  "districts": 3,
+  "places": 6
+ },
+ {
+  "id": "prachin-buri",
+  "districts": 7,
+  "places": 1
+ },
+ {
+  "id": "prachuap-khiri-khan",
+  "districts": 8,
+  "places": 5
+ },
+ {
+  "id": "ranong",
+  "districts": 5,
+  "places": 2
+ },
+ {
+  "id": "ratchaburi",
+  "districts": 10,
+  "places": 3
+ },
+ {
+  "id": "rayong",
+  "districts": 8,
+  "places": 1
+ },
+ {
+  "id": "roi-et",
+  "districts": 20,
+  "places": 0
+ },
+ {
+  "id": "sa-kaeo",
+  "districts": 9,
+  "places": 1
+ },
+ {
+  "id": "sakon-nakhon",
+  "districts": 18,
+  "places": 1
+ },
+ {
+  "id": "samut-prakan",
+  "districts": 6,
+  "places": 4
+ },
+ {
+  "id": "samut-sakhon",
+  "districts": 3,
+  "places": 0
+ },
+ {
+  "id": "samut-songkhram",
+  "districts": 3,
+  "places": 2
+ },
+ {
+  "id": "saraburi",
+  "districts": 13,
+  "places": 2
+ },
+ {
+  "id": "satun",
+  "districts": 7,
+  "places": 2
+ },
+ {
+  "id": "si-sa-ket",
+  "districts": 22,
+  "places": 1
+ },
+ {
+  "id": "sing-buri",
+  "districts": 6,
+  "places": 2
+ },
+ {
+  "id": "songkhla",
+  "districts": 16,
+  "places": 3
+ },
+ {
+  "id": "sukhothai",
+  "districts": 9,
+  "places": 12
+ },
+ {
+  "id": "suphan-buri",
+  "districts": 10,
+  "places": 2
+ },
+ {
+  "id": "surat-thani",
+  "districts": 19,
+  "places": 6
+ },
+ {
+  "id": "surin",
+  "districts": 17,
+  "places": 0
+ },
+ {
+  "id": "tak",
+  "districts": 9,
+  "places": 5
+ },
+ {
+  "id": "trang",
+  "districts": 10,
+  "places": 1
+ },
+ {
+  "id": "trat",
+  "districts": 7,
+  "places": 4
+ },
+ {
+  "id": "ubon-ratchathani",
+  "districts": 25,
+  "places": 6
+ },
+ {
+  "id": "udon-thani",
+  "districts": 20,
+  "places": 1
+ },
+ {
+  "id": "uthai-thani",
+  "districts": 8,
+  "places": 1
+ },
+ {
+  "id": "uttaradit",
+  "districts": 9,
+  "places": 3
+ },
+ {
+  "id": "yala",
+  "districts": 8,
+  "places": 2
+ },
+ {
+  "id": "yasothon",
+  "districts": 9,
+  "places": 1
+ }
+]

@@ -1,0 +1,36 @@
+{
+  "nakhon-ratchasima": [
+    {
+      "slot": 3,
+      "place": {
+        "id": "node/5518427849",
+        "name": "อุทยานแห่งชาติเขาใหญ่",
+        "nameEn": "Khao Yai National Park",
+        "kind": "park",
+        "lon": 101.3789775,
+        "lat": 14.5078235,
+        "coordinateType": "node",
+        "source": "https://www.openstreetmap.org/node/5518427849",
+        "sourceSnapshot": "2026-10-16T14:32:21Z",
+        "locationNote": "หมุดด่านทางเข้าฝั่งปากช่อง",
+        "locationNoteEn": "Pak Chong · northern checkpoint"
+      }
+    },
+    {
+      "slot": 4,
+      "place": {
+        "id": "node/2525136422",
+        "name": "บ่อน้ำผุดธรรมชาติ",
+        "nameEn": "Natural Spring",
+        "kind": "spring",
+        "lon": 101.4193526,
+        "lat": 14.5475502,
+        "coordinateType": "node",
+        "source": "https://www.openstreetmap.org/node/2525136422",
+        "sourceSnapshot": "2026-10-16T14:32:21Z",
+        "locationNote": "ปากช่อง · จุดน้ำผุดจากแผนที่",
+        "locationNoteEn": "Pak Chong · mapped spring"
+      }
+    }
+  ]
+}
