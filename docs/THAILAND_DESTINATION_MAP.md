@@ -2,13 +2,13 @@
 
 ## Scope
 
-Replaces the four-card /go directory with a province-first, bilingual interactive Thailand map. No database schema, RLS, API, booking, payment, geolocation or admin changes. Existing /go/[slug] guides remain intact. No map SDK, API key or tile service is required.
+Replaces the four-card /go directory with a province-first, bilingual interactive Thailand map. No database schema, RLS, API, booking, payment, geolocation or admin changes. Existing /go/[slug] guides remain intact. No map SDK or API key is required. The country and district vectors are local; optional province hillshade uses an external public Esri tile service.
 
 - 77 province polygons and province-interior display pins.
-- Mouse hover previews a province; leaving the map restores the clicked selection. Click/tap commits the selection.
+- Mouse hover previews a province; leaving the map restores the clicked selection. Click/tap now opens the province drill-down.
 - Six regional views, whole-country reset, native province selector and searchable list (Thai/English province and landmark names).
 - Regional pin/label sizing is compensated for viewBox zoom. SVG clipping prevents off-map geography from covering toolbar controls.
-- Responsive side panel on desktop and stacked panel on mobile. Reduced-motion support and native select/list keyboard alternatives. List selection remains in list view to avoid accidental map hover replacing a choice.
+- Responsive side panel on desktop and stacked panel on mobile. Reduced-motion support and native select/list keyboard alternatives. List selection opens the same province drill-down; hover never opens it.
 - Featured starting points: Pak Chong / Khao Yai, Khun Dan Prakan Chon Dam and Erawan Waterfall.
 
 ## Content and geographic boundaries
@@ -35,3 +35,22 @@ Province CTA uses the existing unified text search with the Thai province name a
 ## Release boundary
 
 Preview / draft PR first. Do not merge or promote this feature without the user's review. No production migration is necessary.
+
+## Province drill-down
+
+Click/tap a province polygon or pin, native province choice, list item or featured card to open its district map. Back to Thailand restores the country explorer. Province changes remount the drill-down, abort obsolete fetches and reset local zoom/selection. One province JSON is fetched on demand and cached in memory, not all 77 upfront.
+
+- 77 local province files with 928 district-level units, including Bangkok's 50 khet. This is the represented **2019** geoBoundaries ADM2 snapshot (THA-ADM2-78962969), not a claim of current official legal boundaries. District source: Royal Thai Survey Department / OCHA ROAP, CC BY 3.0 IGO. Thai names use the MIT-licensed Kongvut table with explicit corrections of known English-name aliases.
+- Fit-province view, district click/native select, selected-district highlight, zoom buttons (1–4×), fit reset and collision-reduced labels. Geographic shapes and hillshade use the same normalized Web Mercator projection. No drag/pinch or 3D terrain is claimed.
+- 263 sourced OSM map points across 65 provinces, capped at 12 per province. Twelve provinces have no points in this source collection and show an honest empty state while all districts remain selectable. Coverage is not a complete national POI inventory.
+- Numbered map points and accessible list choices open source details and zoom to the point. Area-centre coordinates are explicitly marked as approximate centres, not entrances. Khun Dan dam and Erawan waterfall use separately checked OSM coordinates. The Khao Yai visitor-centre coordinate falls in the Nakhon Nayok district geometry; it is not forced into Nakhon Ratchasima.
+- Optional **2D hillshade**, not 3D, from Esri World Hillshade, clipped to the province district union. Tile selection is bounded (at most 20 fit-view tiles); zoom does not request an unbounded tile pyramid. Toggle off removes raster requests; failed tiles show status and an all-failed raster layer disappears while district exploration remains usable. No account, key or paid plan was created. Provider terms, availability and production traffic limits must be reviewed before high-volume launch.
+- Full provenance and distinct licenses: `/maps/PROVINCE_MAP_LICENSE.md`, Thai name MIT notice, per-province ODbL derived-point collections and downloadable `/maps/provinces/index.json`. Generator: `scripts/build-province-maps.py` with explicit input file arguments. No raw research caches or credentials are committed.
+
+### Drill-down validation
+
+- Eight new pure/data tests (16 destination tests total); 194 regression tests pass across all suites. Migration-manifest verification and TypeScript pass.
+- Real mouse and touch province-pin activation, SVG district click, district selector, place choice/source precision, zoom/reset, terrain off, back navigation, province switch, data-fetch failure/retry and all-terrain-failed fallback checked locally.
+- axe WCAG 2/2.1 A/AA: no violations in eight TH/EN × desktop/mobile × dense Bangkok/empty-points province states. No horizontal overflow or page exceptions observed in those checks; automated checking is not certification.
+- Desktop province-fit, selected Pak Chong, Nakhon Nayok terrain and actual mobile viewport visually inspected. Full-page mobile browser screenshots can misplace sticky chrome, so actual viewport capture was checked separately.
+- Optional terrain is an external network dependency; the local boundary and point files remain usable without it. No production database writes or migrations.

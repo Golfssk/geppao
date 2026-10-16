@@ -1,0 +1,470 @@
+{
+ "districtSource": "THA-ADM2-78962969",
+ "year": 2019,
+ "districtLicense": "CC-BY-3.0-IGO",
+ "placesLicense": "ODbL-1.0",
+ "provinces": [
+  {
+   "id": "amnat-charoen",
+   "districts": 7,
+   "places": 0,
+   "url": "/maps/provinces/amnat-charoen.json"
+  },
+  {
+   "id": "ang-thong",
+   "districts": 7,
+   "places": 0,
+   "url": "/maps/provinces/ang-thong.json"
+  },
+  {
+   "id": "bangkok",
+   "districts": 50,
+   "places": 12,
+   "url": "/maps/provinces/bangkok.json"
+  },
+  {
+   "id": "bueng-kan",
+   "districts": 8,
+   "places": 0,
+   "url": "/maps/provinces/bueng-kan.json"
+  },
+  {
+   "id": "buri-ram",
+   "districts": 23,
+   "places": 1,
+   "url": "/maps/provinces/buri-ram.json"
+  },
+  {
+   "id": "chachoengsao",
+   "districts": 11,
+   "places": 0,
+   "url": "/maps/provinces/chachoengsao.json"
+  },
+  {
+   "id": "chai-nat",
+   "districts": 8,
+   "places": 1,
+   "url": "/maps/provinces/chai-nat.json"
+  },
+  {
+   "id": "chaiyaphum",
+   "districts": 16,
+   "places": 6,
+   "url": "/maps/provinces/chaiyaphum.json"
+  },
+  {
+   "id": "chanthaburi",
+   "districts": 10,
+   "places": 5,
+   "url": "/maps/provinces/chanthaburi.json"
+  },
+  {
+   "id": "chiang-mai",
+   "districts": 25,
+   "places": 12,
+   "url": "/maps/provinces/chiang-mai.json"
+  },
+  {
+   "id": "chiang-rai",
+   "districts": 18,
+   "places": 12,
+   "url": "/maps/provinces/chiang-rai.json"
+  },
+  {
+   "id": "chon-buri",
+   "districts": 11,
+   "places": 4,
+   "url": "/maps/provinces/chon-buri.json"
+  },
+  {
+   "id": "chumphon",
+   "districts": 8,
+   "places": 0,
+   "url": "/maps/provinces/chumphon.json"
+  },
+  {
+   "id": "kalasin",
+   "districts": 18,
+   "places": 3,
+   "url": "/maps/provinces/kalasin.json"
+  },
+  {
+   "id": "kamphaeng-phet",
+   "districts": 11,
+   "places": 3,
+   "url": "/maps/provinces/kamphaeng-phet.json"
+  },
+  {
+   "id": "kanchanaburi",
+   "districts": 13,
+   "places": 12,
+   "url": "/maps/provinces/kanchanaburi.json"
+  },
+  {
+   "id": "khon-kaen",
+   "districts": 26,
+   "places": 5,
+   "url": "/maps/provinces/khon-kaen.json"
+  },
+  {
+   "id": "krabi",
+   "districts": 8,
+   "places": 12,
+   "url": "/maps/provinces/krabi.json"
+  },
+  {
+   "id": "lampang",
+   "districts": 13,
+   "places": 8,
+   "url": "/maps/provinces/lampang.json"
+  },
+  {
+   "id": "lamphun",
+   "districts": 8,
+   "places": 1,
+   "url": "/maps/provinces/lamphun.json"
+  },
+  {
+   "id": "loei",
+   "districts": 14,
+   "places": 4,
+   "url": "/maps/provinces/loei.json"
+  },
+  {
+   "id": "lopburi",
+   "districts": 11,
+   "places": 2,
+   "url": "/maps/provinces/lopburi.json"
+  },
+  {
+   "id": "mae-hong-son",
+   "districts": 7,
+   "places": 8,
+   "url": "/maps/provinces/mae-hong-son.json"
+  },
+  {
+   "id": "maha-sarakham",
+   "districts": 13,
+   "places": 0,
+   "url": "/maps/provinces/maha-sarakham.json"
+  },
+  {
+   "id": "mukdahan",
+   "districts": 7,
+   "places": 2,
+   "url": "/maps/provinces/mukdahan.json"
+  },
+  {
+   "id": "nakhon-nayok",
+   "districts": 4,
+   "places": 3,
+   "url": "/maps/provinces/nakhon-nayok.json"
+  },
+  {
+   "id": "nakhon-pathom",
+   "districts": 7,
+   "places": 3,
+   "url": "/maps/provinces/nakhon-pathom.json"
+  },
+  {
+   "id": "nakhon-phanom",
+   "districts": 12,
+   "places": 1,
+   "url": "/maps/provinces/nakhon-phanom.json"
+  },
+  {
+   "id": "nakhon-ratchasima",
+   "districts": 32,
+   "places": 5,
+   "url": "/maps/provinces/nakhon-ratchasima.json"
+  },
+  {
+   "id": "nakhon-sawan",
+   "districts": 15,
+   "places": 1,
+   "url": "/maps/provinces/nakhon-sawan.json"
+  },
+  {
+   "id": "nakhon-si-thammarat",
+   "districts": 23,
+   "places": 5,
+   "url": "/maps/provinces/nakhon-si-thammarat.json"
+  },
+  {
+   "id": "nan",
+   "districts": 15,
+   "places": 6,
+   "url": "/maps/provinces/nan.json"
+  },
+  {
+   "id": "narathiwat",
+   "districts": 13,
+   "places": 1,
+   "url": "/maps/provinces/narathiwat.json"
+  },
+  {
+   "id": "nong-bua-lam-phu",
+   "districts": 6,
+   "places": 1,
+   "url": "/maps/provinces/nong-bua-lam-phu.json"
+  },
+  {
+   "id": "nong-khai",
+   "districts": 9,
+   "places": 0,
+   "url": "/maps/provinces/nong-khai.json"
+  },
+  {
+   "id": "nonthaburi",
+   "districts": 6,
+   "places": 2,
+   "url": "/maps/provinces/nonthaburi.json"
+  },
+  {
+   "id": "pathum-thani",
+   "districts": 7,
+   "places": 4,
+   "url": "/maps/provinces/pathum-thani.json"
+  },
+  {
+   "id": "pattani",
+   "districts": 12,
+   "places": 0,
+   "url": "/maps/provinces/pattani.json"
+  },
+  {
+   "id": "phangnga",
+   "districts": 8,
+   "places": 5,
+   "url": "/maps/provinces/phangnga.json"
+  },
+  {
+   "id": "phatthalung",
+   "districts": 11,
+   "places": 1,
+   "url": "/maps/provinces/phatthalung.json"
+  },
+  {
+   "id": "phayao",
+   "districts": 9,
+   "places": 4,
+   "url": "/maps/provinces/phayao.json"
+  },
+  {
+   "id": "phetchabun",
+   "districts": 11,
+   "places": 4,
+   "url": "/maps/provinces/phetchabun.json"
+  },
+  {
+   "id": "phetchaburi",
+   "districts": 8,
+   "places": 4,
+   "url": "/maps/provinces/phetchaburi.json"
+  },
+  {
+   "id": "phichit",
+   "districts": 12,
+   "places": 0,
+   "url": "/maps/provinces/phichit.json"
+  },
+  {
+   "id": "phitsanulok",
+   "districts": 9,
+   "places": 4,
+   "url": "/maps/provinces/phitsanulok.json"
+  },
+  {
+   "id": "phra-nakhon-si-ayutthaya",
+   "districts": 16,
+   "places": 12,
+   "url": "/maps/provinces/phra-nakhon-si-ayutthaya.json"
+  },
+  {
+   "id": "phrae",
+   "districts": 8,
+   "places": 4,
+   "url": "/maps/provinces/phrae.json"
+  },
+  {
+   "id": "phuket",
+   "districts": 3,
+   "places": 6,
+   "url": "/maps/provinces/phuket.json"
+  },
+  {
+   "id": "prachin-buri",
+   "districts": 7,
+   "places": 1,
+   "url": "/maps/provinces/prachin-buri.json"
+  },
+  {
+   "id": "prachuap-khiri-khan",
+   "districts": 8,
+   "places": 5,
+   "url": "/maps/provinces/prachuap-khiri-khan.json"
+  },
+  {
+   "id": "ranong",
+   "districts": 5,
+   "places": 2,
+   "url": "/maps/provinces/ranong.json"
+  },
+  {
+   "id": "ratchaburi",
+   "districts": 10,
+   "places": 3,
+   "url": "/maps/provinces/ratchaburi.json"
+  },
+  {
+   "id": "rayong",
+   "districts": 8,
+   "places": 1,
+   "url": "/maps/provinces/rayong.json"
+  },
+  {
+   "id": "roi-et",
+   "districts": 20,
+   "places": 0,
+   "url": "/maps/provinces/roi-et.json"
+  },
+  {
+   "id": "sa-kaeo",
+   "districts": 9,
+   "places": 1,
+   "url": "/maps/provinces/sa-kaeo.json"
+  },
+  {
+   "id": "sakon-nakhon",
+   "districts": 18,
+   "places": 1,
+   "url": "/maps/provinces/sakon-nakhon.json"
+  },
+  {
+   "id": "samut-prakan",
+   "districts": 6,
+   "places": 4,
+   "url": "/maps/provinces/samut-prakan.json"
+  },
+  {
+   "id": "samut-sakhon",
+   "districts": 3,
+   "places": 0,
+   "url": "/maps/provinces/samut-sakhon.json"
+  },
+  {
+   "id": "samut-songkhram",
+   "districts": 3,
+   "places": 2,
+   "url": "/maps/provinces/samut-songkhram.json"
+  },
+  {
+   "id": "saraburi",
+   "districts": 13,
+   "places": 2,
+   "url": "/maps/provinces/saraburi.json"
+  },
+  {
+   "id": "satun",
+   "districts": 7,
+   "places": 2,
+   "url": "/maps/provinces/satun.json"
+  },
+  {
+   "id": "si-sa-ket",
+   "districts": 22,
+   "places": 1,
+   "url": "/maps/provinces/si-sa-ket.json"
+  },
+  {
+   "id": "sing-buri",
+   "districts": 6,
+   "places": 2,
+   "url": "/maps/provinces/sing-buri.json"
+  },
+  {
+   "id": "songkhla",
+   "districts": 16,
+   "places": 3,
+   "url": "/maps/provinces/songkhla.json"
+  },
+  {
+   "id": "sukhothai",
+   "districts": 9,
+   "places": 12,
+   "url": "/maps/provinces/sukhothai.json"
+  },
+  {
+   "id": "suphan-buri",
+   "districts": 10,
+   "places": 2,
+   "url": "/maps/provinces/suphan-buri.json"
+  },
+  {
+   "id": "surat-thani",
+   "districts": 19,
+   "places": 6,
+   "url": "/maps/provinces/surat-thani.json"
+  },
+  {
+   "id": "surin",
+   "districts": 17,
+   "places": 0,
+   "url": "/maps/provinces/surin.json"
+  },
+  {
+   "id": "tak",
+   "districts": 9,
+   "places": 5,
+   "url": "/maps/provinces/tak.json"
+  },
+  {
+   "id": "trang",
+   "districts": 10,
+   "places": 1,
+   "url": "/maps/provinces/trang.json"
+  },
+  {
+   "id": "trat",
+   "districts": 7,
+   "places": 4,
+   "url": "/maps/provinces/trat.json"
+  },
+  {
+   "id": "ubon-ratchathani",
+   "districts": 25,
+   "places": 6,
+   "url": "/maps/provinces/ubon-ratchathani.json"
+  },
+  {
+   "id": "udon-thani",
+   "districts": 20,
+   "places": 1,
+   "url": "/maps/provinces/udon-thani.json"
+  },
+  {
+   "id": "uthai-thani",
+   "districts": 8,
+   "places": 1,
+   "url": "/maps/provinces/uthai-thani.json"
+  },
+  {
+   "id": "uttaradit",
+   "districts": 9,
+   "places": 3,
+   "url": "/maps/provinces/uttaradit.json"
+  },
+  {
+   "id": "yala",
+   "districts": 8,
+   "places": 2,
+   "url": "/maps/provinces/yala.json"
+  },
+  {
+   "id": "yasothon",
+   "districts": 9,
+   "places": 1,
+   "url": "/maps/provinces/yasothon.json"
+  }
+ ]
+}
