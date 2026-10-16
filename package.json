@@ -11,14 +11,14 @@
     "check": "npm run verify:migrations && npm run test:stays && npm run test:host && npm run test:admin && npm run test:intake && npm run test:search && npm run test:destinations && npm run test:health && npm run typecheck && npm run build",
     "verify:migrations": "node scripts/verify-migrations.mjs",
     "write:migration-manifest": "node scripts/verify-migrations.mjs --write",
+    "test:health": "node --experimental-strip-types --test tests/health-*.test.mjs",
     "test:stays": "node --experimental-strip-types --test tests/stays-*.test.mjs",
     "test:host": "node --experimental-strip-types --test tests/host-*.test.mjs",
     "test:admin": "node --experimental-strip-types --test tests/admin-*.test.mjs",
     "test:intake": "node --experimental-strip-types --test tests/intake-*.test.mjs",
     "test:search": "node --experimental-strip-types --test tests/search-*.test.mjs",
     "test:destinations": "node --experimental-strip-types --test tests/destinations-*.test.mjs",
-    "test:visual": "playwright test",
-    "test:health": "node --experimental-strip-types --test tests/health-*.test.mjs"
+    "test:visual": "playwright test"
   },
   "dependencies": {
     "@supabase/ssr": "0.12.7",
