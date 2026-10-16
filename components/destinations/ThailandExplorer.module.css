@@ -11,3 +11,7 @@
 
 .explorer{scroll-margin-top:110px}
 @media(max-width:760px){.explorer{scroll-margin-top:80px}}
+
+.flying .mapTop,.flying .mapBottom,.flying .compass,.flying .seaLabels,.flying .pin,.flying .activePin{opacity:0;transition:opacity .16s ease;pointer-events:none}.flying .detail{opacity:.55;transition:opacity .3s ease}.flying .canvas{cursor:progress}
+
+.flying .landmass{filter:none}

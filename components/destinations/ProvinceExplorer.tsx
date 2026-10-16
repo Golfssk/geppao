@@ -5,6 +5,11 @@ import {provinceData,provinceSearchHref} from '@/lib/destinations/thailand';
 import {terrainTiles,zoomViewBox,placeKind,districtLabels,type ProvinceMapData,type MapPlace} from '@/lib/destinations/province-map';
 import s from './ProvinceExplorer.module.css';
 const cache=new Map<string,ProvinceMapData>();
+/** Warm only the clicked province while the country camera flies in. Failures retain the normal retry UI. */
+export function preloadProvince(id:string){
+ if(cache.has(id))return;
+ void fetch(`/maps/provinces/${id}.json`).then(r=>{if(!r.ok)throw new Error('map unavailable');return r.json()}).then((v:ProvinceMapData)=>{if(v.id===id&&v.districts?.length)cache.set(id,v)}).catch(()=>{});
+}
 export function ProvinceExplorer({provinceId,onBack,onProvince}:{provinceId:string;onBack:()=>void;onProvince:(id:string)=>void}){
  const {locale}=useLocale(),en=locale==='en',uid=useId();
  const province=provinceData.find(p=>p.id===provinceId)!;
@@ -32,7 +37,7 @@ export function ProvinceExplorer({provinceId,onBack,onProvince}:{provinceId:stri
  function zoomAt(delta:number){setZoom(z=>Math.max(1,Math.min(4,z+delta)))}
  const allTilesFailed=tiles.length>0&&failedTiles.length===tiles.length;
  const terrainVisible=terrain&&!allTilesFailed;
- return <section className={s.provinceView} aria-label={en?'Province explorer':'สำรวจจังหวัด'}>
+ return <section className={s.provinceView} data-province-view={provinceId} aria-label={en?'Province explorer':'สำรวจจังหวัด'}>
   <div className={s.breadcrumb}><button type="button" onClick={onBack}>← {en?'Thailand':'ประเทศไทย'}</button><span aria-hidden="true">/</span><h2>{en?province.nameEn:province.name}</h2><label className={s.changeProvince}><span className={s.srOnly}>{en?'Change province':'เปลี่ยนจังหวัด'}</span><select aria-label={en?'Change province':'เปลี่ยนจังหวัด'} value={provinceId} onChange={e=>onProvince(e.target.value)}>{[...provinceData].sort((a,b)=>(en?a.nameEn:a.name).localeCompare(en?b.nameEn:b.name,locale)).map(p=><option key={p.id} value={p.id}>{en?p.nameEn:p.name}</option>)}</select></label></div>
   {!data?<div className={s.loading} role="status">{error?<><h3>{en?'This province map could not load':'ยังโหลดแผนที่จังหวัดไม่ได้'}</h3><p>{en?'You can retry or return to the country map.':'ลองใหม่ หรือกลับไปแผนที่ประเทศไทยได้ครับ'}</p><button type="button" onClick={()=>setAttempt(a=>a+1)}>{en?'Retry':'ลองใหม่'}</button></>:<><span className={s.loadingDot}/><p>{en?'Opening districts and places…':'กำลังเปิดเส้นอำเภอและสถานที่…'}</p></>}</div>:<div className={s.layout}>
    <div className={s.mapColumn}>

@@ -54,3 +54,11 @@ Click/tap a province polygon or pin, native province choice, list item or featur
 - axe WCAG 2/2.1 A/AA: no violations in eight TH/EN × desktop/mobile × dense Bangkok/empty-points province states. No horizontal overflow or page exceptions observed in those checks; automated checking is not certification.
 - Desktop province-fit, selected Pak Chong, Nakhon Nayok terrain and actual mobile viewport visually inspected. Full-page mobile browser screenshots can misplace sticky chrome, so actual viewport capture was checked separately.
 - Optional terrain is an external network dependency; the local boundary and point files remain usable without it. No production database writes or migrations.
+
+## Smooth country-to-province camera
+
+Province activation in map view now keeps the existing SVG mounted during a 720ms cubic ease-in/out camera flight toward the clicked province bounds, fitted to the actual desktop/mobile map viewport. The viewBox is updated directly through requestAnimationFrame, avoiding a React rerender of all province paths on every frame. Expensive SVG shadow and distracting pins/labels are suppressed only during the flight; the district view then reveals over 240ms.
+
+Only the clicked province is preloaded in parallel. A new selection cancels the prior frame loop; changing map/list/region restores the overview camera and cancels pending navigation. Unmount cleanup cancels frames. Hover never navigates, and map activation no longer triggers the old abrupt scroll-to-section. List/featured choices retain intentional scroll-to-panel behavior. Reduced-motion preference skips both the camera flight and reveal animation. No geographic/source/database changes.
+
+Three motion tests cover fit, easing/endpoints and integration safeguards (197 regression tests total). Browser checks verified intermediate camera frames on desktop and touch mobile, final target, no overflow/page errors, reduced-motion instant navigation, cancel/restore and latest-selection-wins behavior. Mid-flight, final desktop and mobile views were visually inspected.
