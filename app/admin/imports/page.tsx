@@ -1,3 +1,2 @@
-import Link from 'next/link';
-import {redirect} from 'next/navigation';import {getAdminContext} from '@/lib/admin-access';import {PlaceImportQueue} from '@/components/admin/PlaceImportQueue';export const dynamic='force-dynamic';
-export default async function Imports(){const{user,admin}=await getAdminContext();if(!user)redirect('/host/login');if(!admin)redirect('/');return <main className="page"><div className="container section"><p className="eyebrow">SOURCE-BACKED INTAKE</p><h1>คิวนำเข้าสถานที่ Gebpao</h1><p className="muted">รวบรวม → ตรวจซ้ำและสิทธิ์ → รับเป็น Draft → ตรวจข้อมูลและอนุมัติเผยแพร่</p><p><Link className="btn btn-sage" href="/admin/imports/workbooks">ดูข้อมูลหลักจากไฟล์ Excel →</Link></p><PlaceImportQueue/></div></main>}
+import {redirect} from 'next/navigation';
+export default function Imports(){redirect('/admin/imports/workbooks')}
