@@ -1,5 +1,6 @@
 'use client';
 import Link from 'next/link';
+import {AddToTripButton} from '@/components/trips/AddToTripButton';
 import {useState} from 'react';
 import {useLocale} from '@/components/i18n/LocaleProvider';
 import {stayCopy} from './copy';
@@ -29,7 +30,7 @@ export function StayDetail({place,images,mapUrl,searchContext,demo=false}: {plac
   const map = safeHttpsUrl(mapUrl), phone = safePhone(place.phone), website = safeHttpsUrl(place.website_url);
   return <div className={styles.wrap}>
     <Link className={styles.back} href={`${demo?'/demo/stays':'/search'}?${backParams}`}>← {en?'Back to search':'กลับไปค้นหา'}</Link>
-    <header className={styles.header}><div><p className={styles.eyebrow}>{en?'LOCAL STAY':'ที่พักท้องถิ่น'}</p><h1>{place.name}</h1><p>{place.address||t.unknownAddress}</p></div><span className={styles.status}>{demo?(en?'Demo badge · fictional':'ป้ายตัวอย่าง · จำลอง'):place.verification_status==='verified'?`✓ ${en?'Information verified':'ข้อมูลยืนยันแล้ว'}`:t.pending}</span></header>
+    <header className={styles.header}><div><p className={styles.eyebrow}>{en?'LOCAL STAY':'ที่พักท้องถิ่น'}</p><h1>{place.name}</h1>{!demo&&<AddToTripButton sourceId={place.id}/>}<p>{place.address||t.unknownAddress}</p></div><span className={styles.status}>{demo?(en?'Demo badge · fictional':'ป้ายตัวอย่าง · จำลอง'):place.verification_status==='verified'?`✓ ${en?'Information verified':'ข้อมูลยืนยันแล้ว'}`:t.pending}</span></header>
     <nav className={styles.anchors} aria-label={en?'Property sections':'ส่วนข้อมูลที่พัก'}><a href="#stay-overview">{en?'Overview':'ภาพรวม'}</a><a href="#stay-prices">{en?'Reference prices':'ราคาอ้างอิง'}</a><a href="#stay-facts">{en?'Property facts':'ข้อมูลที่พัก'}</a><a href="#stay-contact">{en?'Contact':'ติดต่อ'}</a></nav>
     {images.length?<section className={styles.gallery} aria-label={en?'Approved property photos':'ภาพที่พักที่อนุมัติแล้ว'}>{images.slice(0,3).map((image,index)=><img className={index===0?styles.cover:''} key={image.image_url} src={image.image_url} alt={image.alt_text||place.name} loading={index===0?'eager':'lazy'}/>)}</section>:<div className={styles.noPhoto}><span aria-hidden>⌂</span><p>{t.noImage}</p></div>}
     <div className={styles.layout}><div className={styles.main}>

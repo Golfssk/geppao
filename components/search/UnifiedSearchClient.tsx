@@ -1,5 +1,6 @@
 'use client';
 import Link from 'next/link';
+import {AddToTripButton} from '@/components/trips/AddToTripButton';
 import {useEffect,useRef,useState} from 'react';
 import {useLocale} from '@/components/i18n/LocaleProvider';
 import {trackProductEvent} from '@/lib/analytics/client';
@@ -60,7 +61,7 @@ export function UnifiedSearchClient({initialQuery:query,initialResult:result,ini
           <div className={styles.body}>{query.type!=='all'&&item.type!==query.type&&<p className={styles.categoryMatch}>{names[query.type]} · {en?'secondary category':'หมวดรอง'}</p>}<h3>{item.name}</h3>{item.catalog_level==='directory'&&<p className={styles.sourceBadge}>{en?'Imported directory · not owner verified':'ข้อมูลจากไฟล์ · ยังไม่ยืนยันกับเจ้าของ'}</p>}{item.directory_facts?.rating!=null&&<p className={styles.snapshot}>★ {Number(item.directory_facts.rating).toFixed(1)} · {item.directory_facts.review_count==null?(en?'count unknown':'ไม่ทราบจำนวนรีวิว'):new Intl.NumberFormat(locale).format(item.directory_facts.review_count)} {en?'reviews in source file':'รีวิวตามไฟล์'}<small>{en?'Snapshot, not live Google data or Gebpao reviews':'ข้อมูลตามไฟล์ ไม่ใช่ข้อมูลสดหรือรีวิว Gebpao'}</small></p>}<p className={styles.location}>{item.address||item.destination_name||(en?'Address not yet confirmed':'ยังไม่มีที่อยู่ที่ยืนยัน')}</p>{item.description&&<p className={styles.description}>{item.description}</p>}{item.starts_at&&<p className={styles.date}>{new Intl.DateTimeFormat(en?'en-GB':'th-TH',{timeZone:'Asia/Bangkok',dateStyle:'medium',timeStyle:'short'}).format(new Date(item.starts_at))}</p>}
             <div className={styles.footer}><div className={styles.price}>{item.price!==null&&item.price_unit?<><small>{item.is_estimate?(en?'Estimated reference price':'ราคาอ้างอิงโดยประมาณ'):(en?'Recorded reference price':'ราคาอ้างอิงที่บันทึกไว้')}</small><strong>{new Intl.NumberFormat(locale,{maximumFractionDigits:2}).format(item.price)} {item.currency} / {units[item.price_unit]||item.price_unit}</strong></>:<span>{item.directory_facts?.price_text?<>{en?'Price in file':'ราคาตามไฟล์'}: {item.directory_facts.price_text}</>:(en?'Price not recorded':'ยังไม่มีราคาอ้างอิง')}</span>}</div>{item.kind==='place'?<Link className={styles.detail} href={`/places/${encodeURIComponent(item.slug)}?${searchQueryParams({...query,locale})}`}>{en?'Details':'ดูรายละเอียด'} <span aria-hidden="true">→</span></Link>:<EventInterestButton eventId={item.id} label={en?"Interested":"สนใจอีเวนต์นี้"} recordedLabel={en?"Interest recorded":"บันทึกความสนใจแล้ว"}/>}</div>
           </div>
-        </article>)}</div>}
+        <AddToTripButton sourceId={item.id} kind={item.kind==='event'?'event':'place'}/></article>)}</div>}
         {!error&&pages>1&&<nav className={styles.pagination} aria-label={en?'Search result pages':'หน้าผลการค้นหา'}>{query.page>1?<Link href={href({page:query.page-1})}>{en?'Previous':'ก่อนหน้า'}</Link>:<span/>}<span>{en?'Page':'หน้า'} {query.page} / {pages}</span>{query.page<pages&&query.page<500?<Link href={href({page:query.page+1})}>{en?'Next':'ถัดไป'}</Link>:<span/>}</nav>}
       </section>
     </div>
