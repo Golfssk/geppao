@@ -13,7 +13,7 @@ export default async function TripPage({params}: {params: Promise<{id: string}>}
   const {id} = await params;
   const supabase = await createClient();
   const {data: auth} = await supabase.auth.getUser();
-  if (!auth.user) redirect('/host/login');
+  if (!auth.user) redirect('/host/login?next='+encodeURIComponent('/trips/'+id));
 
   const [{data: trip}, {data: places}, {data: events}] = await Promise.all([
     supabase
@@ -50,9 +50,6 @@ export default async function TripPage({params}: {params: Promise<{id: string}>}
   return (
     <main className="page">
       <div className="container section">
-        <p className="eyebrow">TRIP WORKSPACE</p>
-        <h1>{trip.title}</h1>
-        <p className="muted">{trip.start_date} – {trip.end_date} · {trip.travelers} คน · {trip.status}</p>
         <TripWorkspace trip={trip} candidates={candidates} />
       </div>
     </main>

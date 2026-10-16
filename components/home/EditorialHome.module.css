@@ -6,3 +6,5 @@
 
 /* The map-led homepage already provides the opening rhythm. */
 .funnel{margin-top:0}
+
+.funnel{background:#faf0e8;border-color:#ecd6c6}.textLink{color:var(--rust)}

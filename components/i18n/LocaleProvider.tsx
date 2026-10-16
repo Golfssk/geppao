@@ -1,9 +1,11 @@
 'use client';
+import {useRouter} from 'next/navigation';
 import {createContext, useContext, useEffect, useState} from 'react';
 type Locale = 'th' | 'en';
 type LocaleContextValue = {locale: Locale; setLocale: (locale: Locale) => void};
 const LocaleContext = createContext<LocaleContextValue | null>(null);
 export function LocaleProvider({children,initialLocale='th'}: {children: React.ReactNode;initialLocale?:Locale}) {
+  const router=useRouter();
   const [locale,setLocaleState] = useState<Locale>(initialLocale);
   useEffect(() => {
     function restore() {
@@ -24,6 +26,7 @@ export function LocaleProvider({children,initialLocale='th'}: {children: React.R
     const url = new URL(window.location.href);
     url.searchParams.set('lang',next);
     window.history.replaceState(null,'',url.pathname + url.search + url.hash);
+    router.refresh();
   }
   useEffect(() => {document.documentElement.lang = locale;},[locale]);
   return <LocaleContext.Provider value={{locale,setLocale}}>{children}</LocaleContext.Provider>;
