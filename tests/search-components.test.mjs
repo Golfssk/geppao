@@ -28,5 +28,6 @@ test('site navigation exposes one Search entry per navigation, with no separate 
  const noop=()=>null;
  const {SiteChrome}=await sourceModule('components/navigation/SiteChrome.tsx',{'next/link':{default:({children,...props})=>React.createElement('a',props,children),__esModule:true},'next/navigation':{usePathname:()=>'/search'},'@/components/brand/Brand':{Brand:noop},'@/components/brand/Logo':{Logo:noop},'@/components/auth/UserNav':{UserNav:noop},'@/components/i18n/LanguageToggle':{LanguageToggle:noop},'@/components/i18n/LocaleProvider':{useLocale:()=>({locale:'en'})},'./SiteChrome.module.css':{}});
  const html=renderToStaticMarkup(React.createElement(SiteChrome,{name:'Synthetic',email:null,isAdmin:false},'test'));
- for(const label of ['Primary navigation','Mobile navigation']){const navigation=html.match(new RegExp(`<nav[^>]*aria-label="${label}"[^>]*>(.*?)</nav>`))[1];assert.equal((navigation.match(/href="\/search"/g)||[]).length,1);assert.doesNotMatch(navigation,/href="\/stays"/);assert.match(navigation,/Search/);}
+ for(const label of ['Primary navigation']){const navigation=html.match(new RegExp(`<nav[^>]*aria-label="${label}"[^>]*>(.*?)</nav>`))[1];assert.equal((navigation.match(/href="\/search"/g)||[]).length,1);assert.doesNotMatch(navigation,/href="\/stays"/);assert.match(navigation,/Search/);assert.doesNotMatch(navigation,/href="\/stories"/);}
+ assert.equal((html.match(/aria-label="Primary navigation"/g)||[]).length,1);
 });

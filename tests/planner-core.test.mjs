@@ -1,0 +1,16 @@
+import test from 'node:test';import assert from 'node:assert/strict';
+import {validDate,validatePlannerInput,scheduleDay,budgetAssessment} from '../lib/planner/request.ts';
+import {readPlannerDraft} from '../lib/planner/draft.ts';
+import {moveRank} from '../lib/planner/order.ts';
+const request={input:'Nature',startDate:'2030-01-01',endDate:'2030-01-02',travelers:2,preferences:{tripMode:'overnight'}};
+test('date validation rejects normalized invalid calendar days',()=>{for(const d of ['2030-02-30','2030-13-01','x','2030-1-1'])assert.equal(validDate(d),false);assert.ok(validDate('2032-02-29'))});
+test('bounded planner request accepts explicit travelers, zero budget and dates',()=>assert.equal(validatePlannerInput({...request,budgetTotal:0}),null));
+for(const [name,patch] of Object.entries({reversed:{endDate:'2029-12-31'},tooLong:{endDate:'2030-02-01'},tooMany:{travelers:31},fractional:{travelers:1.5},negative:{budgetTotal:-1},missingDate:{startDate:''},dayTrip:{preferences:{tripMode:'day_trip'}},longInput:{input:'a'.repeat(1001)}}))test('rejects '+name,()=>assert.equal(typeof validatePlannerInput({...request,...patch}),'string'));
+test('unknown prices cannot claim within-budget even with zero total',()=>{assert.deepEqual(budgetAssessment([{cost:null}],500),{total:0,budgetFit:null,costCoverage:'missing'});assert.equal(budgetAssessment([{cost:0}],0).budgetFit,true);assert.equal(budgetAssessment([{cost:501}],500).budgetFit,false)});
+test('schedule includes duration, travel and buffer instead of hardcoded duplicate times',()=>{const rows=scheduleDay([{id:'a',duration:90},{id:'b',duration:120}],[{toId:'b',durationMinutes:30}]);assert.equal(rows[0].startTime,'09:00');assert.equal(rows[1].startTime,'11:15');assert.equal(rows[1].endTime,'13:15')});
+test('unknown durations and late plans are explicitly marked for review',()=>{assert.equal(scheduleDay([{duration:null}],[])[0].startTime,null);assert.equal(scheduleDay([{duration:600}],[])[0].needsReview,true)});
+test('draft restore expires after 24h and rejects malformed/oversized data',()=>{const now=100000000,d={version:1,savedAt:now,input:'test',vibes:[],tripMode:'overnight',plan:{days:[],items:[]}};assert.ok(readPlannerDraft(JSON.stringify(d),now));assert.equal(readPlannerDraft(JSON.stringify(d),now+86400001),null);for(const raw of ['{','a'.repeat(250001),JSON.stringify({...d,plan:{}})])assert.equal(readPlannerDraft(raw,now),null)});
+test('sparse order moves one row without duplicate positions and respects boundaries',()=>{const items=[{position:0},{position:1024},{position:2048}];assert.equal(moveRank(items,2,-1),512);assert.equal(moveRank(items,0,1),1536);assert.equal(moveRank(items,0,-1),null);assert.equal(moveRank([{position:0},{position:1},{position:2}],2,-1),null)});
+
+const {schedulePatch,thaiTime}=await import('../lib/planner/request.ts');
+test('saved schedule uses Thai timezone and supports midnight rollover',()=>{const p=schedulePatch('2030-01-01','23:30',90);assert.equal(p.startsAt,'2030-01-01T23:30:00+07:00');assert.equal(p.endsAt,'2030-01-01T18:00:00.000Z');assert.equal(thaiTime(p.startsAt),'23:30');assert.equal(schedulePatch('2030-02-30','10:00',90),null);assert.equal(schedulePatch('2030-01-01','25:00',90),null);assert.equal(schedulePatch('2030-01-01','09:00',0),null)});

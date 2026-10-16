@@ -13,7 +13,7 @@ export default async function TripPage({params}: {params: Promise<{id: string}>}
   const {id} = await params;
   const supabase = await createClient();
   const {data: auth} = await supabase.auth.getUser();
-  if (!auth.user) redirect('/host/login');
+  if (!auth.user) redirect('/host/login?next='+encodeURIComponent('/trips/'+id));
 
   const [{data: trip}, {data: places}, {data: events}] = await Promise.all([
     supabase

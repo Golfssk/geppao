@@ -5,9 +5,9 @@ const read=p=>readFileSync(new URL('../'+p,import.meta.url),'utf8');
 test('home is map-led with one main and preserves all sections after the removed opening',()=>{
  const p=read('app/page.tsx'),e=read('components/destinations/ThailandExplorer.tsx');
  assert.match(p,/<ThailandExplorer\/>/);assert.equal((p.match(/<main>/g)||[]).length,1);assert.doesNotMatch(e,/<main\b/);
- for(const removed of ['HomeCategoryCarousel','mapPlace','Travel by mood','home-destinations','เลือกจุดหมาย แล้ววางแผนทริป'])assert.ok(!p.includes(removed),removed);
+ for(const removed of ['Latest stories','EditorialCard','HomeCategoryCarousel','mapPlace','Travel by mood','home-destinations','เลือกจุดหมาย แล้ววางแผนทริป'])assert.ok(!p.includes(removed),removed);
  assert.ok(p.indexOf('<ThailandExplorer/>')<p.indexOf('styles.funnel'));
- for(const retained of ['<TravelTrustBand/>','<HostCTA/>','Latest stories','Organic Recommendation'])assert.ok(p.includes(retained),retained);
+ for(const retained of ['<TravelTrustBand/>','<HostCTA/>','Your next journey'])assert.ok(p.includes(retained),retained);
  assert.doesNotMatch(p,/from\('places'\)/);assert.match(p,/canonical:'https:\/\/geppao.vercel.app'/);
 });
 test('old explorer entry redirects to home while destination guides remain untouched',()=>{
@@ -19,5 +19,5 @@ test('homepage search uses unified catalog types and preserves language',()=>{
  for(const type of ['all','accommodation','restaurant','cafe','attraction','activity'])assert.ok(p.includes(`option value="${type}"`));assert.doesNotMatch(p,/option value="stay"/);
 });
 test('navigation has no duplicate go tab and treats destination guides as home discovery',()=>{
- const p=read('components/navigation/SiteChrome.tsx');assert.doesNotMatch(p,/\['\/go',/);assert.match(p,/\['\/stories','Stories','เรื่องเที่ยว'/);assert.match(p,/pathname.startsWith\('\/go\/'\)/);assert.match(p,/<Link href="\/">\{en\?'Destinations'/);
+ const p=read('components/navigation/SiteChrome.tsx');assert.doesNotMatch(p,/\['\/go',/);assert.doesNotMatch(p,/href="\/stories"|\['\/stories',/);assert.match(p,/pathname.startsWith\('\/go\/'\)/);assert.match(p,/<Link href="\/">\{en\?'Destinations'/);
 });
