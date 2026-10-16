@@ -1,0 +1,27 @@
+import {before,after,test} from 'node:test';
+import assert from 'node:assert/strict';
+import {catalogDatabase,catalogQuery} from './search-db-fixture.mjs';
+let db;
+before(async()=>{db=await catalogDatabase();await db.exec('set role anon');});
+after(async()=>{await db.close();});
+test('unified RPC is security invoker with fixed search path',async()=>{const {rows}=await db.query("select prosecdef,proconfig from pg_proc where proname='search_public_catalog'");assert.equal(rows[0].prosecdef,false);assert.ok(rows[0].proconfig.includes('search_path=public, pg_temp'));});
+test('all returns stays, dining, cafes, attractions, activities and events in global stable pages',async()=>{const a=await catalogQuery(db),b=await catalogQuery(db,{p_page:2});assert.equal(a.total,20);assert.equal(a.items.length,12);assert.equal(b.items.length,8);assert.equal(new Set([...a.items,...b.items].map(x=>x.kind+x.id)).size,20);assert.deepEqual([...new Set([...a.items,...b.items].map(x=>x.type))].sort(),['accommodation','activity','attraction','cafe','event','restaurant']);});
+for(const [p_type,total] of [['accommodation',15],['restaurant',1],['cafe',2],['attraction',1],['activity',1],['event',1]])test(`category ${p_type} has correct total and no duplicates`,async()=>{const r=await catalogQuery(db,{p_type});assert.equal(r.total,total);assert.equal(new Set(r.items.map(x=>x.id)).size,r.items.length);});
+test('secondary cafe category finds a restaurant without duplicating it in all',async()=>{const r=await catalogQuery(db,{p_type:'cafe'});assert.ok(r.items.some(x=>x.type==='restaurant'));assert.equal((await catalogQuery(db,{p_query:'QA restaurant'})).total,1);});
+test('public RPC excludes drafts even for a session permitted to read own drafts',async()=>{await db.exec('reset role;set role authenticated');assert.equal((await db.query("select count(*) as n from places where publication_status='pending'")).rows[0].n,1);const a=await catalogQuery(db),b=await catalogQuery(db,{p_page:2});assert.equal(a.total,20);assert.ok(![...a.items,...b.items].some(x=>x.slug==='qa-stay-16'||x.slug==='qa-private-event'));await db.exec('reset role;set role anon');});
+test('literal punctuation does not turn into a wildcard or query injection',async()=>{for(const p_query of ['%',"' or true --",'x,publication_status.eq.draft'])assert.equal((await catalogQuery(db,{p_query})).total,0);});
+test('name, description and destination text use the same search',async()=>{assert.equal((await catalogQuery(db,{p_query:'ปากช่อง–เขาใหญ่'})).total,20);assert.equal((await catalogQuery(db,{p_query:'Synthetic event'})).total,1);assert.equal((await catalogQuery(db,{p_destination:'not-known'})).total,0);});
+test('stay-only filters retain nightly prices, null-last sort and opt-in capacity semantics',async()=>{const a=await catalogQuery(db,{p_type:'accommodation',p_sort:'price_asc'});assert.equal(a.items[0].price,100);assert.equal(a.items[0].price_unit,'night');assert.equal((await catalogQuery(db,{p_type:'accommodation',p_max_price:250})).total,2);assert.equal((await catalogQuery(db,{p_type:'accommodation',p_guests:4})).total,14);assert.equal((await catalogQuery(db,{p_type:'accommodation',p_guests:5})).total,0);const last=await catalogQuery(db,{p_type:'accommodation',p_sort:'price_desc',p_page:2});assert.equal(last.items.at(-1).price,null);});
+test('unknown amenities never pass a hard filter, including events',async()=>{assert.equal((await catalogQuery(db,{p_pet:true})).total,5);assert.equal((await catalogQuery(db,{p_type:'event',p_parking:true})).total,0);});
+test('events retain explicit price units and the earliest noncancelled future schedule',async()=>{const r=await catalogQuery(db,{p_type:'event'});assert.equal(r.items[0].price,150);assert.equal(r.items[0].price_unit,'person');const {rows}=await db.query("select starts_at::text as starts_at from event_schedules where status='scheduled'");assert.equal(Date.parse(r.items[0].starts_at),Date.parse(rows[0].starts_at));});
+test('empty pages preserve the real total',async()=>{const r=await catalogQuery(db,{p_page:500});assert.equal(r.total,20);assert.deepEqual(r.items,[]);});
+for(const args of [{p_type:'flight'},{p_type:null},{p_page:0},{p_page:501},{p_query:'x'.repeat(101)},{p_max_price:100},{p_guests:4},{p_sort:'price_asc'},{p_type:'accommodation',p_max_price:'NaN'},{p_type:'accommodation',p_guests:31}])test(`direct RPC validates ${JSON.stringify(args)}`,async()=>{await assert.rejects(()=>catalogQuery(db,args));});
+test('unapproved, expired and taken-down media stay hidden despite broad owner read access',async()=>{
+ await db.exec(`reset role;update place_images set approved_for_public=true,rights_expires_at=current_date-1;set role authenticated`);
+ assert.equal((await catalogQuery(db,{p_type:'accommodation',p_query:'QA fixture stay 01'})).items[0].image_url,null);
+ await db.exec(`reset role;update place_images set rights_expires_at=current_date,takedown_status='removed';set role authenticated`);
+ assert.equal((await catalogQuery(db,{p_type:'accommodation',p_query:'QA fixture stay 01'})).items[0].image_url,null);
+ await db.exec(`reset role;update place_images set takedown_status='active';set role authenticated`);
+ assert.ok((await catalogQuery(db,{p_type:'accommodation',p_query:'QA fixture stay 01'})).items[0].image_url);
+ await db.exec('reset role;set role anon');
+});

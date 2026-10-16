@@ -17,7 +17,7 @@ export function StayDetail({place,images,mapUrl,searchContext,demo=false}: {plac
   const {locale} = useLocale(), t = stayCopy[locale], en = locale==='en';
   const [showHandoff,setShowHandoff]=useState(false);
   const query = new URLSearchParams(searchContext); query.set('lang',locale);
-  const backParams = new URLSearchParams(query); backParams.set('page','1');
+  const backParams = new URLSearchParams(query); if(!demo&&!backParams.has('type'))backParams.set('type','accommodation');
   const planner = new URLSearchParams({lang:locale,q:`${place.name} · ${query.get('guests')||'2'} ${en?'travelers':'คน'}`});
   if(query.get('checkIn')){planner.set('startDate',query.get('checkIn')!);planner.set('endDate',query.get('checkOut')!);}
   const nightly = place.prices.filter(p=>p.currency==='THB'&&p.price_unit==='night').sort((a,b)=>Number(a.amount_min)-Number(b.amount_min))[0];
@@ -28,7 +28,7 @@ export function StayDetail({place,images,mapUrl,searchContext,demo=false}: {plac
   const units:Record<string,string> = en?{night:'night',room:'room',person:'person',group:'group',activity:'activity',item:'item',free:'free'}:{night:'คืน',room:'ห้อง',person:'คน',group:'กลุ่ม',activity:'กิจกรรม',item:'รายการ',free:'ฟรี'};
   const map = safeHttpsUrl(mapUrl), phone = safePhone(place.phone), website = safeHttpsUrl(place.website_url);
   return <div className={styles.wrap}>
-    <Link className={styles.back} href={`${demo?'/demo/stays':'/stays'}?${backParams}`}>← {en?'Back to stays':'กลับไปค้นหาที่พัก'}</Link>
+    <Link className={styles.back} href={`${demo?'/demo/stays':'/search'}?${backParams}`}>← {en?'Back to search':'กลับไปค้นหา'}</Link>
     <header className={styles.header}><div><p className={styles.eyebrow}>{en?'LOCAL STAY':'ที่พักท้องถิ่น'}</p><h1>{place.name}</h1><p>{place.address||t.unknownAddress}</p></div><span className={styles.status}>{demo?(en?'Demo badge · fictional':'ป้ายตัวอย่าง · จำลอง'):place.verification_status==='verified'?`✓ ${en?'Information verified':'ข้อมูลยืนยันแล้ว'}`:t.pending}</span></header>
     <nav className={styles.anchors} aria-label={en?'Property sections':'ส่วนข้อมูลที่พัก'}><a href="#stay-overview">{en?'Overview':'ภาพรวม'}</a><a href="#stay-prices">{en?'Reference prices':'ราคาอ้างอิง'}</a><a href="#stay-facts">{en?'Property facts':'ข้อมูลที่พัก'}</a><a href="#stay-contact">{en?'Contact':'ติดต่อ'}</a></nav>
     {images.length?<section className={styles.gallery} aria-label={en?'Approved property photos':'ภาพที่พักที่อนุมัติแล้ว'}>{images.slice(0,3).map((image,index)=><img className={index===0?styles.cover:''} key={image.image_url} src={image.image_url} alt={image.alt_text||place.name} loading={index===0?'eager':'lazy'}/>)}</section>:<div className={styles.noPhoto}><span aria-hidden>⌂</span><p>{t.noImage}</p></div>}

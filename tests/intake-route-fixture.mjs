@@ -8,7 +8,7 @@ export async function sourceModule(path, mocks = {}) {
   const source = await fs.readFile(new URL('../' + path, import.meta.url), 'utf8');
   const {code} = await transform(source, {filename:path, jsc:{parser:{syntax:'typescript',tsx:path.endsWith('.tsx')},transform:{react:{runtime:'automatic'}}},module:{type:'commonjs'}});
   const module = {exports:{}};
-  vm.runInNewContext(code, {module,exports:module.exports,require:name=>Object.hasOwn(mocks,name)?mocks[name]:require(name),console,Request,Response,URL,FormData,fetch}, {filename:path});
+  vm.runInNewContext(code, {module,exports:module.exports,require:name=>Object.hasOwn(mocks,name)?mocks[name]:require(name),console,Request,Response,URL,URLSearchParams,FormData,fetch,AbortSignal}, {filename:path});
   return module.exports;
 }
 export const jsonResponse = {NextResponse:{json:(body, options)=>Response.json(body,options)}};

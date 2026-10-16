@@ -1,6 +1,24 @@
-import Link from 'next/link';
-import {managedPublicMediaUrl} from '@/lib/public-media';
+import type {Metadata} from 'next';
 import {createClient} from '@/lib/supabase/server';
+import {bangkokToday,StayValidationError} from '@/lib/stays/query';
+import {parseSearchQuery} from '@/lib/search/query';
+import {searchPublicCatalog} from '@/lib/search/server';
+import type {SearchResult} from '@/lib/search/types';
 import {UnifiedSearchClient} from '@/components/search/UnifiedSearchClient';
+import type {StayDestination} from '@/lib/stays/types';
 export const dynamic='force-dynamic';
-export default async function Search(){const s=await createClient();const[{data:places},{data:events}]=await Promise.all([s.from('places').select('id,slug,place_type,name,description,address,place_images(image_url,is_cover,sort_order),price_items(amount_min,currency,price_unit)').eq('publication_status','published').order('name'),s.from('events').select('id,name,description,address,temporary_venue_name,event_images(image_url,is_cover,sort_order),event_schedules(starts_at,status),price_items(amount_min,currency,price_unit)').eq('publication_status','published').order('name')]);const items=[...(places??[]).map((x:any)=>({id:x.id,kind:'place' as const,type:x.place_type,name:x.name,slug:x.slug,description:x.description??'',location:x.address??'',image:managedPublicMediaUrl((x.place_images??[]).sort((a:any,b:any)=>Number(b.is_cover)-Number(a.is_cover)||a.sort_order-b.sort_order)[0]?.image_url),price:x.price_items?.[0]?`${x.price_items[0].amount_min} ${x.price_items[0].currency}/${x.price_items[0].price_unit}`:'',date:''})),...(events??[]).map((x:any)=>({id:x.id,kind:'event' as const,type:'event',name:x.name,description:x.description??'',location:x.temporary_venue_name||x.address||'',image:managedPublicMediaUrl((x.event_images??[]).sort((a:any,b:any)=>Number(b.is_cover)-Number(a.is_cover)||a.sort_order-b.sort_order)[0]?.image_url),price:x.price_items?.[0]?`${x.price_items[0].amount_min} ${x.price_items[0].currency}/${x.price_items[0].price_unit}`:'',date:x.event_schedules?.[0]?.starts_at?new Date(x.event_schedules[0].starts_at).toLocaleString('th-TH'):''}))];return <main className="page"><div className="container section"><p className="eyebrow">UNIFIED LOCAL SEARCH</p><h1>ค้นหาทั้งทริปในที่เดียว</h1><p className="muted">ที่พัก ร้านอาหาร คาเฟ่ ที่เที่ยว กิจกรรม และ Event จากฐานข้อมูลเดียวกัน</p><Link className="btn btn-primary" href="/stays">ค้นหาที่พัก · Find a stay →</Link><UnifiedSearchClient items={items}/></div></main>}
+export const metadata:Metadata={title:'ค้นหาทั้งทริปในที่เดียว',description:'ค้นหาร้านอาหาร คาเฟ่ ที่พัก ที่เที่ยว กิจกรรม และอีเวนต์ในที่เดียว เลือกประเภทและวางแผนทริปต่อได้'};
+export default async function Search({searchParams}:{searchParams:Promise<Record<string,string|string[]|undefined>>}) {
+  const params=new URLSearchParams();
+  for(const[key,value]of Object.entries(await searchParams)) for(const v of Array.isArray(value)?value:value?[value]:[]) params.append(key,v);
+  const today=bangkokToday();let query=parseSearchQuery(new URLSearchParams(),today),error:string|null=null,result:SearchResult|null=null;
+  let destinations:StayDestination[]=[];
+  try{query=parseSearchQuery(params,today);}catch(e){error=e instanceof StayValidationError?e.code:'invalid';}
+  if(!error)try{
+    const supabase=await createClient();
+    const [catalog,destinationResult]=await Promise.all([searchPublicCatalog(query),supabase.from('destinations').select('slug,name').eq('status','active').order('name').limit(100).abortSignal(AbortSignal.timeout(8000))]);
+    if(destinationResult.error)throw new Error('Destination catalog unavailable');
+    result=catalog;destinations=destinationResult.data??[];
+  }catch{error='unavailable';}
+  return <UnifiedSearchClient initialQuery={query} initialResult={result} initialError={error} destinations={destinations} today={today}/>;
+}
