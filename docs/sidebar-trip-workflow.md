@@ -9,9 +9,14 @@
 - Save validates day/item structure, rechecks publication, preserves day-specific time slots, and returns the created trip ID even if recalculation fails. Partial item/day failures return a recovery ID rather than encouraging duplicate retries.
 - Saved trip items: scoped edit/delete checks, sparse integer ordering, explicit start/duration editor in Thailand timezone, locked-item protection, network errors and clipboard fallback.
 
+## Language follow-up
+- Compact accessible TH/EN segmented control; language changes refresh server-rendered copy and persist across navigation/reload.
+- Generic GepPao planner heading; automatic-generation pilot disclosure remains separate and accurate.
+- Localized homepage support sections, planner errors/type labels, saved-trip list/workspace and schedule controls. User-entered titles and source place names/descriptions are preserved, not machine-translated.
+
 ## Verification
-- `npm run check`: migration integrity, all unit/route tests, TypeScript, production build.
-- `PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH=$(command -v chromium) npm run test:visual -- --workers=2`: desktop/mobile destination flows, homepage stories removal, planner form/draft/login boundary, stale-plan prevention, sidebar keyboard controls and horizontal-overflow checks. Synthetic plan and API responses only.
+- `npm run check`: migration integrity, 324 unit/route tests, TypeScript, production build.
+- `PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH=$(command -v chromium) npm run test:visual -- --workers=2`: 10 browser tests: desktop/mobile locale switching and compact controls, destination flows, homepage stories removal, planner form/draft/login boundary, stale-plan prevention, sidebar keyboard controls and horizontal-overflow checks. Synthetic plan and API responses only.
 - Argos captures the existing 12 destination states plus two planner states. Visual differences are intentional and need review, not automatic baseline approval.
 
 ## Release boundaries / remaining work

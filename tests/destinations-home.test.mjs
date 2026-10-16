@@ -6,8 +6,8 @@ test('home is map-led with one main and preserves all sections after the removed
  const p=read('app/page.tsx'),e=read('components/destinations/ThailandExplorer.tsx');
  assert.match(p,/<ThailandExplorer\/>/);assert.equal((p.match(/<main>/g)||[]).length,1);assert.doesNotMatch(e,/<main\b/);
  for(const removed of ['Latest stories','EditorialCard','HomeCategoryCarousel','mapPlace','Travel by mood','home-destinations','เลือกจุดหมาย แล้ววางแผนทริป'])assert.ok(!p.includes(removed),removed);
- assert.ok(p.indexOf('<ThailandExplorer/>')<p.indexOf('styles.funnel'));
- for(const retained of ['<TravelTrustBand/>','<HostCTA/>','Your next journey'])assert.ok(p.includes(retained),retained);
+ assert.ok(p.indexOf('<ThailandExplorer/>')<p.indexOf('<HomePlannerCTA/>'));
+ for(const retained of ['<TravelTrustBand/>','<HostCTA/>','<HomePlannerCTA/>'])assert.ok(p.includes(retained),retained);
  assert.doesNotMatch(p,/from\('places'\)/);assert.match(p,/canonical:'https:\/\/geppao.vercel.app'/);
 });
 test('old explorer entry redirects to home while destination guides remain untouched',()=>{

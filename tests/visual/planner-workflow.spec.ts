@@ -42,3 +42,17 @@ test('homepage removes stories from both navigation and content',async({page})=>
  await expect(page.locator('a[href="/stories"]')).toHaveCount(0);
  await expect(page.getByText('Latest stories',{exact:true})).toHaveCount(0);
 });
+test('compact language control switches homepage and planner copy in both directions',async({page})=>{
+ await page.goto('/?lang=th');await expect(page.locator('[data-province]')).toHaveCount(77);
+ const english=page.getByRole('button',{name:'EN',exact:true});await english.click();
+ await expect(english).toHaveAttribute('aria-pressed','true');
+ await expect(page.getByRole('heading',{name:'Every trip starts with clear information'})).toBeVisible();
+ await expect(page.getByRole('heading',{name:'For accommodation owners'})).toBeVisible();
+ const size=await page.getByRole('group',{name:'Language',exact:true}).boundingBox();expect(size!.width).toBeLessThanOrEqual(90);expect(size!.height).toBeLessThanOrEqual(48);
+ await page.reload();await expect(page.locator('html')).toHaveAttribute('lang','en');
+ await page.goto('/planner');await expect(page.getByRole('heading',{name:'Plan a trip that feels like you'})).toBeVisible();
+ await page.getByRole('button',{name:'Create my trip',exact:true}).click();await expect(page.locator('p[role="alert"]')).toHaveText('Describe your trip in 1–1,000 characters.');
+ await page.getByRole('button',{name:'TH',exact:true}).click();await expect(page.getByRole('heading',{name:'วางแผนทริปในแบบของคุณ'})).toBeVisible();
+ await expect(page.locator('p[role="alert"]')).toHaveText('กรุณาระบุรายละเอียดทริปไม่เกิน 1,000 ตัวอักษร');
+ await expect.poll(()=>page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth)).toBe(true);
+});
