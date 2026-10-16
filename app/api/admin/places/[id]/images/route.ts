@@ -1,8 +1,9 @@
 import {NextResponse} from 'next/server';
+import {isManagedPublicMediaUrl} from '@/lib/public-media';
 import {getAdminContext} from '@/lib/admin-access';
 const BUCKET='place-images',MAX=8*1024*1024,TYPES=new Set(['image/jpeg','image/png','image/webp']),BASES=new Set(['owner','licensed','public_domain','geppao_owned']);
 const clean=(v:FormDataEntryValue|null,max:number)=>typeof v==='string'?v.trim().slice(0,max):'';
-async function context(id:string){const c=await getAdminContext();if(!c.user||!c.admin)return {...c,place:null};const{data:place}=await c.supabase.from('places').select('id,business_id,place_images(id,image_url,sort_order,is_cover,alt_text,rights_holder,rights_basis,permission_evidence,permission_date,approved_for_public,takedown_status)').eq('id',id).is('business_id',null).maybeSingle();return {...c,place};}
+async function context(id:string){const c=await getAdminContext();if(!c.user||!c.admin)return {...c,place:null};const{data:place}=await c.supabase.from('places').select('id,business_id,place_images(id,image_url,sort_order,is_cover,alt_text,rights_holder,rights_basis,permission_evidence,permission_date,approved_for_public,takedown_status)').eq('id',id).maybeSingle();return {...c,place};}
 function pathFromUrl(url:string){const marker=`/storage/v1/object/public/${BUCKET}/`,i=url.indexOf(marker);return i<0?null:decodeURIComponent(url.slice(i+marker.length));}
 export async function POST(request:Request,{params}:{params:Promise<{id:string}>}){
   const{id}=await params,c=await context(id);if(!c.user)return NextResponse.json({error:'กรุณาเข้าสู่ระบบ'},{status:401});if(!c.admin)return NextResponse.json({error:'ไม่มีสิทธิ์ Admin'},{status:403});if(!c.place)return NextResponse.json({error:'ไม่พบ Place ที่ดูแลได้'},{status:404});
@@ -18,7 +19,7 @@ export async function PATCH(request:Request,{params}:{params:Promise<{id:string}
   const{id}=await params,c=await context(id);if(!c.user)return NextResponse.json({error:'กรุณาเข้าสู่ระบบ'},{status:401});if(!c.admin)return NextResponse.json({error:'ไม่มีสิทธิ์ Admin'},{status:403});if(!c.place)return NextResponse.json({error:'ไม่พบ Place ที่ดูแลได้'},{status:404});
   const{imageId,action='cover'}=await request.json(),image=(c.place.place_images??[]).find((item:any)=>item.id===imageId);if(!image)return NextResponse.json({error:'ไม่พบรูปภาพ'},{status:404});
   if(action==='approve'){
-    if(!pathFromUrl(image.image_url)||!image.rights_holder||!image.rights_basis||!image.permission_evidence||!image.permission_date)return NextResponse.json({error:'หลักฐานสิทธิ์ยังไม่ครบหรือไฟล์ไม่ได้อยู่ใน GepPao Storage'},{status:400});
+    if(!isManagedPublicMediaUrl(image.image_url)||!pathFromUrl(image.image_url)||!image.rights_holder||!image.rights_basis||!image.permission_evidence||!image.permission_date)return NextResponse.json({error:'หลักฐานสิทธิ์ยังไม่ครบหรือไฟล์ไม่ได้อยู่ใน GepPao Storage'},{status:400});
     const{error}=await c.supabase.from('place_images').update({approved_for_public:true,approved_by:c.user.id,approved_at:new Date().toISOString(),takedown_status:'active'}).eq('id',imageId).eq('place_id',id);return error?NextResponse.json({error:error.message},{status:500}):NextResponse.json({success:true,approved_for_public:true});
   }
   if(action==='revoke'){const{error}=await c.supabase.from('place_images').update({approved_for_public:false,approved_by:null,approved_at:null}).eq('id',imageId).eq('place_id',id);return error?NextResponse.json({error:error.message},{status:500}):NextResponse.json({success:true,approved_for_public:false});}

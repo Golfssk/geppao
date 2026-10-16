@@ -1,3 +1,4 @@
+import {poolDetails} from '@/lib/intake/validation';
 import {NextResponse} from 'next/server';
 import {getAdminContext} from '@/lib/admin-access';
 
@@ -27,7 +28,10 @@ export async function PUT(request:Request,{params}:{params:Promise<{id:string}>}
     return NextResponse.json({error:'ข้อมูลที่พักไม่ถูกต้อง — Check-in และ Check-out ต้องกรอกเป็นคู่'},{status:400});
   }
 
+  let pool:Record<string,string|number|null>;
+  try{pool=poolDetails(body)}catch(error){return NextResponse.json({error:error instanceof Error?error.message:'ข้อมูลที่พักไม่ถูกต้อง'},{status:400})}
   const details = {
+    ...pool,
     accommodationType: nullableText(body.accommodationType,200),
     roomCount,
     maximumGuests,

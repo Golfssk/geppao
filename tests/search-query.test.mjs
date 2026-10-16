@@ -1,0 +1,11 @@
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import {sourceModule} from './intake-route-fixture.mjs';
+const stay=await sourceModule('lib/stays/query.ts');
+const {parseSearchQuery,searchQueryParams,searchRpcArgs,legacyStaySearchHref,SEARCH_TYPES}=await sourceModule('lib/search/query.ts',{'../stays/query':stay});
+const parse=s=>parseSearchQuery(new URLSearchParams(s),'2026-10-15');
+test('search defaults to all with one category contract',()=>{assert.equal(parse('').type,'all');assert.equal(SEARCH_TYPES.length,7);});
+for(const type of SEARCH_TYPES)test(`URL round trip keeps category ${type}`,()=>{const q=parse(`type=${type}&q=coffee&destination=pak-chong-khao-yai&lang=en&parking=1&page=2`);assert.deepEqual(parse(searchQueryParams(q).toString()),q);assert.equal(searchRpcArgs(q).p_type,type);});
+test('stay planning and all stay filters round trip under unified URL',()=>{const q=parse('type=accommodation&checkIn=2026-11-01&checkOut=2026-11-03&guests=4&capacity=1&maxPrice=0&sort=price_desc');assert.deepEqual(parse(searchQueryParams(q).toString()),q);assert.equal(searchRpcArgs(q).p_guests,4);});
+for(const value of ['type=flight','type=all&type=cafe','type=all&maxPrice=100','type=restaurant&sort=price_asc','type=event&capacity=1','type=cafe&guests=4','type=all&checkIn=2026-11-01&checkOut=2026-11-03','q='+('a'.repeat(101)),'page=501'])test(`rejects mixed/invalid search ${value.slice(0,70)}`,()=>assert.throws(()=>parse(value)));
+test('legacy /stays redirects locally, preserves context and cannot override type',()=>{const href=legacyStaySearchHref({q:'cafe & villa',type:'all',lang:'en',checkIn:'2026-11-01',checkOut:'2026-11-03',page:'2',next:'https://evil.invalid'});const u=new URL(href,'https://test.invalid');assert.equal(u.pathname,'/search');assert.equal(u.searchParams.get('type'),'accommodation');assert.equal(u.searchParams.get('q'),'cafe & villa');assert.equal(u.searchParams.get('page'),'2');assert.equal(u.searchParams.has('next'),false);});
