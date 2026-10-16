@@ -3,3 +3,6 @@
 
 @media(prefers-reduced-motion:reduce){.destination{transition:none}.destination:hover{transform:none}}
 @media(max-width:640px){.section.destinationSection{padding-top:24px}}
+
+/* The map-led homepage already provides the opening rhythm. */
+.funnel{margin-top:0}
