@@ -1,0 +1,618 @@
+[
+ {
+  "id": "amnat-charoen",
+  "name": "อำนาจเจริญ",
+  "nameEn": "Amnat Charoen",
+  "landmark": "พุทธอุทยานพระมงคลมิ่งเมือง",
+  "landmarkEn": "Phra Mongkhon Ming Mueang Buddhist Park",
+  "region": "northeast"
+ },
+ {
+  "id": "ang-thong",
+  "name": "อ่างทอง",
+  "nameEn": "Ang Thong",
+  "landmark": "วัดม่วง",
+  "landmarkEn": "Wat Muang",
+  "region": "central"
+ },
+ {
+  "id": "bangkok",
+  "name": "กรุงเทพมหานคร",
+  "nameEn": "Bangkok",
+  "landmark": "วัดอรุณราชวราราม",
+  "landmarkEn": "Wat Arun",
+  "region": "central"
+ },
+ {
+  "id": "bueng-kan",
+  "name": "บึงกาฬ",
+  "nameEn": "Bueng Kan",
+  "landmark": "หินสามวาฬ",
+  "landmarkEn": "Three Whale Rock",
+  "region": "northeast"
+ },
+ {
+  "id": "buri-ram",
+  "name": "บุรีรัมย์",
+  "nameEn": "Buri Ram",
+  "landmark": "ปราสาทหินพนมรุ้ง",
+  "landmarkEn": "Phanom Rung Historical Park",
+  "region": "northeast"
+ },
+ {
+  "id": "chachoengsao",
+  "name": "ฉะเชิงเทรา",
+  "nameEn": "Chachoengsao",
+  "landmark": "วัดโสธรวรารามวรวิหาร",
+  "landmarkEn": "Wat Sothon Wararam Worawihan",
+  "region": "east"
+ },
+ {
+  "id": "chai-nat",
+  "name": "ชัยนาท",
+  "nameEn": "Chai Nat",
+  "landmark": "เขื่อนเจ้าพระยา",
+  "landmarkEn": "Chao Phraya Dam",
+  "region": "central"
+ },
+ {
+  "id": "chaiyaphum",
+  "name": "ชัยภูมิ",
+  "nameEn": "Chaiyaphum",
+  "landmark": "อุทยานแห่งชาติป่าหินงาม",
+  "landmarkEn": "Pa Hin Ngam National Park",
+  "region": "northeast"
+ },
+ {
+  "id": "chanthaburi",
+  "name": "จันทบุรี",
+  "nameEn": "Chanthaburi",
+  "landmark": "ชุมชนริมน้ำจันทบูร",
+  "landmarkEn": "Chanthaboon Waterfront",
+  "region": "east"
+ },
+ {
+  "id": "chiang-mai",
+  "name": "เชียงใหม่",
+  "nameEn": "Chiang Mai",
+  "landmark": "วัดพระธาตุดอยสุเทพ",
+  "landmarkEn": "Wat Phra That Doi Suthep",
+  "region": "north"
+ },
+ {
+  "id": "chiang-rai",
+  "name": "เชียงราย",
+  "nameEn": "Chiang Rai",
+  "landmark": "วัดร่องขุ่น",
+  "landmarkEn": "Wat Rong Khun",
+  "region": "north"
+ },
+ {
+  "id": "chon-buri",
+  "name": "ชลบุรี",
+  "nameEn": "Chon Buri",
+  "landmark": "อ่าวพัทยา",
+  "landmarkEn": "Pattaya Bay",
+  "region": "east"
+ },
+ {
+  "id": "chumphon",
+  "name": "ชุมพร",
+  "nameEn": "Chumphon",
+  "landmark": "หาดทุ่งวัวแล่น",
+  "landmarkEn": "Thung Wua Laen Beach",
+  "region": "south"
+ },
+ {
+  "id": "kalasin",
+  "name": "กาฬสินธุ์",
+  "nameEn": "Kalasin",
+  "landmark": "พิพิธภัณฑ์สิรินธร",
+  "landmarkEn": "Sirindhorn Museum",
+  "region": "northeast"
+ },
+ {
+  "id": "kamphaeng-phet",
+  "name": "กำแพงเพชร",
+  "nameEn": "Kamphaeng Phet",
+  "landmark": "อุทยานประวัติศาสตร์กำแพงเพชร",
+  "landmarkEn": "Kamphaeng Phet Historical Park",
+  "region": "central"
+ },
+ {
+  "id": "kanchanaburi",
+  "name": "กาญจนบุรี",
+  "nameEn": "Kanchanaburi",
+  "landmark": "น้ำตกเอราวัณ",
+  "landmarkEn": "Erawan Waterfall",
+  "region": "west"
+ },
+ {
+  "id": "khon-kaen",
+  "name": "ขอนแก่น",
+  "nameEn": "Khon Kaen",
+  "landmark": "พระมหาธาตุแก่นนคร",
+  "landmarkEn": "Phra Mahathat Kaen Nakhon",
+  "region": "northeast"
+ },
+ {
+  "id": "krabi",
+  "name": "กระบี่",
+  "nameEn": "Krabi",
+  "landmark": "หาดไร่เลย์",
+  "landmarkEn": "Railay Beach",
+  "region": "south"
+ },
+ {
+  "id": "lampang",
+  "name": "ลำปาง",
+  "nameEn": "Lampang",
+  "landmark": "วัดพระธาตุลำปางหลวง",
+  "landmarkEn": "Wat Phra That Lampang Luang",
+  "region": "north"
+ },
+ {
+  "id": "lamphun",
+  "name": "ลำพูน",
+  "nameEn": "Lamphun",
+  "landmark": "วัดพระธาตุหริภุญชัย",
+  "landmarkEn": "Wat Phra That Hariphunchai",
+  "region": "north"
+ },
+ {
+  "id": "loei",
+  "name": "เลย",
+  "nameEn": "Loei",
+  "landmark": "อุทยานแห่งชาติภูกระดึง",
+  "landmarkEn": "Phu Kradueng National Park",
+  "region": "northeast"
+ },
+ {
+  "id": "lopburi",
+  "name": "ลพบุรี",
+  "nameEn": "Lopburi",
+  "landmark": "พระปรางค์สามยอด",
+  "landmarkEn": "Phra Prang Sam Yot",
+  "region": "central"
+ },
+ {
+  "id": "mae-hong-son",
+  "name": "แม่ฮ่องสอน",
+  "nameEn": "Mae Hong Son",
+  "landmark": "สะพานซูตองเป้",
+  "landmarkEn": "Su Tong Pae Bridge",
+  "region": "north"
+ },
+ {
+  "id": "maha-sarakham",
+  "name": "มหาสารคาม",
+  "nameEn": "Maha Sarakham",
+  "landmark": "พระธาตุนาดูน",
+  "landmarkEn": "Phra That Na Dun",
+  "region": "northeast"
+ },
+ {
+  "id": "mukdahan",
+  "name": "มุกดาหาร",
+  "nameEn": "Mukdahan",
+  "landmark": "อุทยานแห่งชาติภูผาเทิบ",
+  "landmarkEn": "Phu Pha Thoep National Park",
+  "region": "northeast"
+ },
+ {
+  "id": "nakhon-nayok",
+  "name": "นครนายก",
+  "nameEn": "Nakhon Nayok",
+  "landmark": "เขื่อนขุนด่านปราการชล",
+  "landmarkEn": "Khun Dan Prakan Chon Dam",
+  "region": "central"
+ },
+ {
+  "id": "nakhon-pathom",
+  "name": "นครปฐม",
+  "nameEn": "Nakhon Pathom",
+  "landmark": "พระปฐมเจดีย์",
+  "landmarkEn": "Phra Pathom Chedi",
+  "region": "central"
+ },
+ {
+  "id": "nakhon-phanom",
+  "name": "นครพนม",
+  "nameEn": "Nakhon Phanom",
+  "landmark": "พระธาตุพนม",
+  "landmarkEn": "Phra That Phanom",
+  "region": "northeast"
+ },
+ {
+  "id": "nakhon-ratchasima",
+  "name": "นครราชสีมา",
+  "nameEn": "Nakhon Ratchasima",
+  "landmark": "ปากช่อง · เขาใหญ่",
+  "landmarkEn": "Pak Chong · Khao Yai",
+  "region": "northeast"
+ },
+ {
+  "id": "nakhon-sawan",
+  "name": "นครสวรรค์",
+  "nameEn": "Nakhon Sawan",
+  "landmark": "บึงบอระเพ็ด",
+  "landmarkEn": "Bueng Boraphet",
+  "region": "central"
+ },
+ {
+  "id": "nakhon-si-thammarat",
+  "name": "นครศรีธรรมราช",
+  "nameEn": "Nakhon Si Thammarat",
+  "landmark": "วัดพระมหาธาตุวรมหาวิหาร",
+  "landmarkEn": "Wat Phra Mahathat Woramahawihan",
+  "region": "south"
+ },
+ {
+  "id": "nan",
+  "name": "น่าน",
+  "nameEn": "Nan",
+  "landmark": "วัดภูมินทร์",
+  "landmarkEn": "Wat Phumin",
+  "region": "north"
+ },
+ {
+  "id": "narathiwat",
+  "name": "นราธิวาส",
+  "nameEn": "Narathiwat",
+  "landmark": "หาดนราทัศน์",
+  "landmarkEn": "Narathat Beach",
+  "region": "south"
+ },
+ {
+  "id": "nong-bua-lam-phu",
+  "name": "หนองบัวลำภู",
+  "nameEn": "Nong Bua Lam Phu",
+  "landmark": "พิพิธภัณฑ์หอยหิน 150 ล้านปี",
+  "landmarkEn": "150 Million Year Shell Museum",
+  "region": "northeast"
+ },
+ {
+  "id": "nong-khai",
+  "name": "หนองคาย",
+  "nameEn": "Nong Khai",
+  "landmark": "ศาลาแก้วกู่",
+  "landmarkEn": "Sala Keoku",
+  "region": "northeast"
+ },
+ {
+  "id": "nonthaburi",
+  "name": "นนทบุรี",
+  "nameEn": "Nonthaburi",
+  "landmark": "เกาะเกร็ด",
+  "landmarkEn": "Ko Kret",
+  "region": "central"
+ },
+ {
+  "id": "pathum-thani",
+  "name": "ปทุมธานี",
+  "nameEn": "Pathum Thani",
+  "landmark": "พิพิธภัณฑ์วิทยาศาสตร์แห่งชาติ",
+  "landmarkEn": "National Science Museum",
+  "region": "central"
+ },
+ {
+  "id": "pattani",
+  "name": "ปัตตานี",
+  "nameEn": "Pattani",
+  "landmark": "มัสยิดกลางจังหวัดปัตตานี",
+  "landmarkEn": "Pattani Central Mosque",
+  "region": "south"
+ },
+ {
+  "id": "phangnga",
+  "name": "พังงา",
+  "nameEn": "Phangnga",
+  "landmark": "อ่าวพังงา",
+  "landmarkEn": "Phang Nga Bay",
+  "region": "south"
+ },
+ {
+  "id": "phatthalung",
+  "name": "พัทลุง",
+  "nameEn": "Phatthalung",
+  "landmark": "ทะเลน้อย",
+  "landmarkEn": "Thale Noi",
+  "region": "south"
+ },
+ {
+  "id": "phayao",
+  "name": "พะเยา",
+  "nameEn": "Phayao",
+  "landmark": "กว๊านพะเยา",
+  "landmarkEn": "Kwan Phayao",
+  "region": "north"
+ },
+ {
+  "id": "phetchabun",
+  "name": "เพชรบูรณ์",
+  "nameEn": "Phetchabun",
+  "landmark": "วัดพระธาตุผาซ่อนแก้ว",
+  "landmarkEn": "Wat Phra That Pha Sorn Kaew",
+  "region": "central"
+ },
+ {
+  "id": "phetchaburi",
+  "name": "เพชรบุรี",
+  "nameEn": "Phetchaburi",
+  "landmark": "อุทยานประวัติศาสตร์พระนครคีรี",
+  "landmarkEn": "Phra Nakhon Khiri Historical Park",
+  "region": "west"
+ },
+ {
+  "id": "phichit",
+  "name": "พิจิตร",
+  "nameEn": "Phichit",
+  "landmark": "บึงสีไฟ",
+  "landmarkEn": "Bueng Si Fai",
+  "region": "central"
+ },
+ {
+  "id": "phitsanulok",
+  "name": "พิษณุโลก",
+  "nameEn": "Phitsanulok",
+  "landmark": "วัดพระศรีรัตนมหาธาตุวรมหาวิหาร",
+  "landmarkEn": "Wat Phra Si Rattana Mahathat",
+  "region": "central"
+ },
+ {
+  "id": "phra-nakhon-si-ayutthaya",
+  "name": "พระนครศรีอยุธยา",
+  "nameEn": "Phra Nakhon Si Ayutthaya",
+  "landmark": "อุทยานประวัติศาสตร์พระนครศรีอยุธยา",
+  "landmarkEn": "Ayutthaya Historical Park",
+  "region": "central"
+ },
+ {
+  "id": "phrae",
+  "name": "แพร่",
+  "nameEn": "Phrae",
+  "landmark": "คุ้มวงศ์บุรี",
+  "landmarkEn": "Vongburi House",
+  "region": "north"
+ },
+ {
+  "id": "phuket",
+  "name": "ภูเก็ต",
+  "nameEn": "Phuket",
+  "landmark": "แหลมพรหมเทพ",
+  "landmarkEn": "Promthep Cape",
+  "region": "south"
+ },
+ {
+  "id": "prachin-buri",
+  "name": "ปราจีนบุรี",
+  "nameEn": "Prachin Buri",
+  "landmark": "อุทยานแห่งชาติทับลาน",
+  "landmarkEn": "Thap Lan National Park",
+  "region": "east"
+ },
+ {
+  "id": "prachuap-khiri-khan",
+  "name": "ประจวบคีรีขันธ์",
+  "nameEn": "Prachuap Khiri Khan",
+  "landmark": "ถ้ำพระยานคร",
+  "landmarkEn": "Phraya Nakhon Cave",
+  "region": "west"
+ },
+ {
+  "id": "ranong",
+  "name": "ระนอง",
+  "nameEn": "Ranong",
+  "landmark": "บ่อน้ำร้อนรักษะวาริน",
+  "landmarkEn": "Raksawarin Hot Springs",
+  "region": "south"
+ },
+ {
+  "id": "ratchaburi",
+  "name": "ราชบุรี",
+  "nameEn": "Ratchaburi",
+  "landmark": "อุทยานหินเขางู",
+  "landmarkEn": "Khao Ngu Stone Park",
+  "region": "west"
+ },
+ {
+  "id": "rayong",
+  "name": "ระยอง",
+  "nameEn": "Rayong",
+  "landmark": "เกาะเสม็ด",
+  "landmarkEn": "Ko Samet",
+  "region": "east"
+ },
+ {
+  "id": "roi-et",
+  "name": "ร้อยเอ็ด",
+  "nameEn": "Roi Et",
+  "landmark": "บึงพลาญชัย",
+  "landmarkEn": "Bueng Phlan Chai",
+  "region": "northeast"
+ },
+ {
+  "id": "sa-kaeo",
+  "name": "สระแก้ว",
+  "nameEn": "Sa Kaeo",
+  "landmark": "ปราสาทสด๊กก๊อกธม",
+  "landmarkEn": "Sdok Kok Thom",
+  "region": "east"
+ },
+ {
+  "id": "sakon-nakhon",
+  "name": "สกลนคร",
+  "nameEn": "Sakon Nakhon",
+  "landmark": "วัดพระธาตุเชิงชุมวรวิหาร",
+  "landmarkEn": "Wat Phra That Choeng Chum",
+  "region": "northeast"
+ },
+ {
+  "id": "samut-prakan",
+  "name": "สมุทรปราการ",
+  "nameEn": "Samut Prakan",
+  "landmark": "สถานตากอากาศบางปู",
+  "landmarkEn": "Bang Pu Recreation Centre",
+  "region": "central"
+ },
+ {
+  "id": "samut-sakhon",
+  "name": "สมุทรสาคร",
+  "nameEn": "Samut Sakhon",
+  "landmark": "ศาลพันท้ายนรสิงห์",
+  "landmarkEn": "Phanthai Norasing Shrine",
+  "region": "central"
+ },
+ {
+  "id": "samut-songkhram",
+  "name": "สมุทรสงคราม",
+  "nameEn": "Samut Songkhram",
+  "landmark": "ตลาดน้ำอัมพวา",
+  "landmarkEn": "Amphawa Floating Market",
+  "region": "central"
+ },
+ {
+  "id": "saraburi",
+  "name": "สระบุรี",
+  "nameEn": "Saraburi",
+  "landmark": "วัดพระพุทธบาทราชวรมหาวิหาร",
+  "landmarkEn": "Wat Phra Phutthabat",
+  "region": "central"
+ },
+ {
+  "id": "satun",
+  "name": "สตูล",
+  "nameEn": "Satun",
+  "landmark": "เกาะหลีเป๊ะ",
+  "landmarkEn": "Ko Lipe",
+  "region": "south"
+ },
+ {
+  "id": "si-sa-ket",
+  "name": "ศรีสะเกษ",
+  "nameEn": "Si Sa Ket",
+  "landmark": "วัดพระธาตุสุพรรณหงส์",
+  "landmarkEn": "Wat Phra That Suphannahong",
+  "region": "northeast"
+ },
+ {
+  "id": "sing-buri",
+  "name": "สิงห์บุรี",
+  "nameEn": "Sing Buri",
+  "landmark": "อนุสาวรีย์วีรชนค่ายบางระจัน",
+  "landmarkEn": "Bang Rachan Heroes Monument",
+  "region": "central"
+ },
+ {
+  "id": "songkhla",
+  "name": "สงขลา",
+  "nameEn": "Songkhla",
+  "landmark": "หาดสมิหลา",
+  "landmarkEn": "Samila Beach",
+  "region": "south"
+ },
+ {
+  "id": "sukhothai",
+  "name": "สุโขทัย",
+  "nameEn": "Sukhothai",
+  "landmark": "อุทยานประวัติศาสตร์สุโขทัย",
+  "landmarkEn": "Sukhothai Historical Park",
+  "region": "central"
+ },
+ {
+  "id": "suphan-buri",
+  "name": "สุพรรณบุรี",
+  "nameEn": "Suphan Buri",
+  "landmark": "บึงฉวาก",
+  "landmarkEn": "Bueng Chawak",
+  "region": "central"
+ },
+ {
+  "id": "surat-thani",
+  "name": "สุราษฎร์ธานี",
+  "nameEn": "Surat Thani",
+  "landmark": "เขื่อนรัชชประภา",
+  "landmarkEn": "Ratchaprapha Dam",
+  "region": "south"
+ },
+ {
+  "id": "surin",
+  "name": "สุรินทร์",
+  "nameEn": "Surin",
+  "landmark": "ปราสาทศีขรภูมิ",
+  "landmarkEn": "Sikhoraphum Sanctuary",
+  "region": "northeast"
+ },
+ {
+  "id": "tak",
+  "name": "ตาก",
+  "nameEn": "Tak",
+  "landmark": "น้ำตกทีลอซู",
+  "landmarkEn": "Thi Lo Su Waterfall",
+  "region": "west"
+ },
+ {
+  "id": "trang",
+  "name": "ตรัง",
+  "nameEn": "Trang",
+  "landmark": "ถ้ำมรกต",
+  "landmarkEn": "Emerald Cave",
+  "region": "south"
+ },
+ {
+  "id": "trat",
+  "name": "ตราด",
+  "nameEn": "Trat",
+  "landmark": "เกาะช้าง",
+  "landmarkEn": "Ko Chang",
+  "region": "east"
+ },
+ {
+  "id": "ubon-ratchathani",
+  "name": "อุบลราชธานี",
+  "nameEn": "Ubon Ratchathani",
+  "landmark": "สามพันโบก",
+  "landmarkEn": "Sam Phan Bok",
+  "region": "northeast"
+ },
+ {
+  "id": "udon-thani",
+  "name": "อุดรธานี",
+  "nameEn": "Udon Thani",
+  "landmark": "ทะเลบัวแดง",
+  "landmarkEn": "Red Lotus Lake",
+  "region": "northeast"
+ },
+ {
+  "id": "uthai-thani",
+  "name": "อุทัยธานี",
+  "nameEn": "Uthai Thani",
+  "landmark": "หุบป่าตาด",
+  "landmarkEn": "Hup Pa Tat",
+  "region": "central"
+ },
+ {
+  "id": "uttaradit",
+  "name": "อุตรดิตถ์",
+  "nameEn": "Uttaradit",
+  "landmark": "เขื่อนสิริกิติ์",
+  "landmarkEn": "Sirikit Dam",
+  "region": "north"
+ },
+ {
+  "id": "yala",
+  "name": "ยะลา",
+  "nameEn": "Yala",
+  "landmark": "อัยเยอร์เวง",
+  "landmarkEn": "Aiyerweng Skywalk",
+  "region": "south"
+ },
+ {
+  "id": "yasothon",
+  "name": "ยโสธร",
+  "nameEn": "Yasothon",
+  "landmark": "พระธาตุก่องข้าวน้อย",
+  "landmarkEn": "Phra That Kong Khao Noi",
+  "region": "northeast"
+ }
+]
