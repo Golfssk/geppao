@@ -4,6 +4,8 @@ type Context={params:Promise<{id:string}>};
 const fail=(error:string,status:number)=>NextResponse.json({error},{status});
 const uuid=(value:unknown)=>typeof value==='string'&&/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(value);
 async function context(request:Request,ctx:Context){
+ const origin=request.headers.get('origin');if(origin&&origin!==new URL(request.url).origin||request.headers.get('sec-fetch-site')==='cross-site')return {response:fail('ไม่อนุญาตคำขอจากเว็บไซต์อื่น',403)};
+ if(Number(request.headers.get('content-length')||0)>16000)return {response:fail('ข้อมูลใหญ่เกินไป',413)};
  const {id}=await ctx.params;if(!uuid(id))return {response:fail('ไม่พบทริป',404)};
  const s=await createClient();const {data:auth}=await s.auth.getUser();if(!auth.user)return {response:fail('กรุณาเข้าสู่ระบบ',401)};
  const {data:canEdit,error}=await s.rpc('can_edit_trip',{target_trip_id:id});if(error)return {response:fail('ตรวจสอบสิทธิ์ไม่สำเร็จ',503)};if(!canEdit)return {response:fail('ไม่มีสิทธิ์แก้ไขทริปนี้',403)};

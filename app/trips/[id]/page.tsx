@@ -49,8 +49,8 @@ export default async function TripPage({params}: {params: Promise<{id: string}>}
 
   return (
     <main className="page">
-      <div className="container section">
-        <TripWorkspace trip={trip} candidates={candidates} />
+      <div className="container section trip-workspace-shell">
+        <TripWorkspace trip={trip} candidates={candidates} canEdit={trip.owner_user_id===auth.user.id||Boolean((await supabase.rpc('can_edit_trip',{target_trip_id:id})).data)} isOwner={trip.owner_user_id===auth.user.id} />
       </div>
     </main>
   );
