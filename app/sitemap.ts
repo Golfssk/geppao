@@ -9,7 +9,6 @@ export default async function sitemap():Promise<MetadataRoute.Sitemap>{
   const core:MetadataRoute.Sitemap=[
     {url:base,changeFrequency:'daily',priority:1},
     {url:`${base}/stories`,changeFrequency:'daily',priority:.9},
-    {url:`${base}/go`,changeFrequency:'weekly',priority:.9},
     {url:`${base}/search`,changeFrequency:'weekly',priority:.8},
     {url:`${base}/planner`,changeFrequency:'weekly',priority:.9},
     {url:`${base}/events`,changeFrequency:'daily',priority:.7},
