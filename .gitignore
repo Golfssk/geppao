@@ -19,3 +19,9 @@ coverage/
 
 # Supabase local CLI state
 supabase/.temp/
+
+# Visual testing output (never commit generated screenshots)
+/screenshots/
+/test-results/
+/playwright-report/
+/argos-report/
