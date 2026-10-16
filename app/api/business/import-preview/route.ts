@@ -1,12 +1,24 @@
 import {NextResponse} from 'next/server';
-import {lookup} from 'node:dns/promises';
-import {isIP} from 'node:net';
 import {getBusinessContext} from '@/lib/business-access';
-
-const MAX_HTML_BYTES=1_500_000;
-const privateIp=(ip:string)=>/^10\.|^127\.|^169\.254\.|^192\.168\.|^0\.|^::1$|^fc|^fd|^fe80/i.test(ip)||(/^172\.(\d+)\./.test(ip)&&Number(ip.split('.')[1])>=16&&Number(ip.split('.')[1])<=31);
-async function checked(input:string){const url=new URL(input);if(!['http:','https:'].includes(url.protocol)||url.username||url.password)throw new Error('URL ไม่ถูกต้อง');if(isIP(url.hostname)?privateIp(url.hostname):['localhost','0.0.0.0'].includes(url.hostname))throw new Error('ไม่อนุญาต URL นี้');const records=await lookup(url.hostname,{all:true});if(!records.length||records.some(record=>privateIp(record.address)))throw new Error('ไม่อนุญาต URL ภายใน');return url}
-const meta=(html:string,key:string)=>{const escaped=key.replace(/[.*+?^${}()|[\]\\]/g,'\\$&');for(const pattern of [new RegExp(`<meta[^>]+(?:property|name)=["']${escaped}["'][^>]+content=["']([^"']+)["']`,'i'),new RegExp(`<meta[^>]+content=["']([^"']+)["'][^>]+(?:property|name)=["']${escaped}["']`,'i')]){const match=html.match(pattern);if(match)return match[1]}return ''};
-const decode=(value:string)=>value.replace(/&amp;/g,'&').replace(/&quot;/g,'"').replace(/&#39;/g,"'").replace(/&lt;/g,'<').replace(/&gt;/g,'>').trim();
-
-export async function POST(request:Request){const{user,business}=await getBusinessContext();if(!user)return NextResponse.json({error:'กรุณาเข้าสู่ระบบ'},{status:401});if(!business)return NextResponse.json({error:'กรุณาสร้างโปรไฟล์ธุรกิจก่อน'},{status:403});let source='';try{source=String((await request.json())?.url||'').trim()}catch{return NextResponse.json({error:'ข้อมูลไม่ถูกต้อง'},{status:400})}try{let url=await checked(source),response:Response|undefined;for(let attempt=0;attempt<4;attempt++){response=await fetch(url,{redirect:'manual',signal:AbortSignal.timeout(8000),headers:{'User-Agent':'GepPao Owner Import/1.0','Accept':'text/html'}});if([301,302,303,307,308].includes(response.status)){const location=response.headers.get('location');if(!location)throw new Error('ปลายทางไม่ถูกต้อง');url=await checked(new URL(location,url).toString());continue}break}if(!response?.ok)throw new Error('ไม่สามารถอ่านหน้านี้ได้');if(!(response.headers.get('content-type')||'').includes('text/html'))throw new Error('ลิงก์ต้องเป็นหน้าเว็บ');if(Number(response.headers.get('content-length')||0)>MAX_HTML_BYTES)throw new Error('หน้าเว็บมีขนาดใหญ่เกินไป');const html=(await response.text()).slice(0,MAX_HTML_BYTES);const title=decode(meta(html,'og:title')||html.match(/<title[^>]*>([^<]+)<\/title>/i)?.[1]||'');const description=decode(meta(html,'og:description')||meta(html,'description'));const images=[meta(html,'og:image'),meta(html,'twitter:image')].filter(Boolean).map(value=>new URL(decode(value),url).toString()).filter((value,index,all)=>all.indexOf(value)===index&&/^https?:/.test(value)).slice(0,5);return NextResponse.json({sourceUrl:url.toString(),sourceKind:/facebook\.com$/i.test(url.hostname)?'facebook':'website',name:title.slice(0,120),description:description.slice(0,2000),websiteUrl:url.toString(),images})}catch(error){return NextResponse.json({error:error instanceof Error?error.message:'ดึงข้อมูลไม่สำเร็จ'},{status:400})}}
+import {cleanSourceUrl,findPlaceMatches,linkKind,LINK_LABELS,mapHints} from '@/lib/business-import/links';
+import {readPublicResource} from '@/lib/business-import/network';
+import {extractOwnerMetadata,type ImportFields} from '@/lib/business-import/metadata';
+import {sameOrigin,smallJson} from '@/lib/business-import/request';
+export const runtime='nodejs';
+export async function POST(request:Request){
+ const{supabase,user,business}=await getBusinessContext();if(!user)return NextResponse.json({error:'กรุณาเข้าสู่ระบบ'},{status:401});if(!business)return NextResponse.json({error:'กรุณาสร้างโปรไฟล์ธุรกิจก่อน'},{status:403});
+ try{
+  sameOrigin(request);const body=await smallJson(request);let url=cleanSourceUrl(body.url),kind=linkKind(url),fields:ImportFields={},images:string[]=[],mode='link_only',message='';
+  if(kind==='google_maps'&&['maps.app.goo.gl','goo.gl'].includes(url.hostname)){try{url=cleanSourceUrl((await readPublicResource(url.toString(),'maps_redirect')).url)}catch{message='ลิงก์แผนที่แบบย่อยังเปิดไม่ได้ ลองคัดลอกลิงก์เต็ม หรือเติมข้อมูลต่อได้เลย';}}
+  if(kind==='google_maps')fields=mapHints(url);
+  if(kind==='website'&&body.ownerPermission===true){
+   try{const page=await readPublicResource(url.toString(),'page');url=cleanSourceUrl(page.url);kind=linkKind(url);const result=extractOwnerMetadata(page.body.toString('utf8'),url.toString());fields=result.fields;images=result.images;mode=Object.keys(fields).some(k=>k!=='websiteUrl')?'metadata':'link_only';message=result.ambiguous?'หน้านี้มีหลายกิจการ จึงยังไม่เลือกให้อัตโนมัติ กรุณาระบุชื่อกิจการของคุณ':mode==='metadata'?'เติมข้อมูลที่เว็บไซต์เปิดเผยให้แล้ว กรุณาตรวจชื่อ ที่อยู่ และเลือกรูปที่คุณมีสิทธิ์ใช้':'เว็บไซต์นี้ไม่มีข้อมูลสถานที่ที่อ่านได้ เก็บลิงก์ให้แล้ว เติมเฉพาะข้อมูลที่ขาดได้เลย';}
+   catch(e){message=e instanceof Error?e.message:'อ่านเว็บไซต์ไม่ได้ เก็บลิงก์ไว้แล้ว เติมข้อมูลต่อได้';}
+  }
+  const matches=await findPlaceMatches(supabase,url,fields.name||'',business.id);
+  const exact=matches.filter(m=>m.reason==='source');
+  if(exact.length===1){const{data,error}=await supabase.from('places').select('name,address,place_type,latitude,longitude,google_maps_url').eq('id',exact[0].id).maybeSingle();if(error)throw new Error('อ่านสถานที่เดิมไม่สำเร็จ');if(data){fields={...fields,name:data.name,address:data.address||'',type:data.place_type,latitude:data.latitude==null?'':String(data.latitude),longitude:data.longitude==null?'':String(data.longitude),googleMapsUrl:data.google_maps_url||''};mode='existing';message='พบสถานที่นี้ใน Gebpao แล้ว ไม่ต้องสร้างซ้ำ หากเป็นกิจการของคุณ ให้ขอสิทธิ์จัดการด้านล่าง';}}
+  if(!message)message=kind==='website'?'เก็บลิงก์ให้แล้ว หากเป็นเว็บไซต์ของคุณ ให้ยืนยันสิทธิ์ด้านล่างเพื่อช่วยเติมข้อมูล':`เก็บลิงก์ ${LINK_LABELS[kind]} ให้แล้ว รุ่นฟรีนี้ไม่คัดลอกรูปหรือเนื้อหาจากแพลตฟอร์มนี้ แต่ตรวจสถานที่เดิมและเติมข้อมูลต่อได้`;
+  return NextResponse.json({sourceUrl:url.toString(),sourceKind:kind,sourceLabel:LINK_LABELS[kind],mode,message,fields,images,matches},{headers:{'Cache-Control':'private, no-store'}});
+ }catch(e){return NextResponse.json({error:e instanceof Error?e.message:'ตรวจลิงก์ไม่สำเร็จ กรุณาลองใหม่'},{status:400})}
+}
