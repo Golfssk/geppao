@@ -18,33 +18,33 @@ User-approved scope: all gaps from the public Wanderlog comparison. This is a de
 
 No schema changes in Delivery 1. No migration needed, no production test records inserted.
 
-## Delivery 2 — durable wishlist and day moves implemented; collaboration remains open
+## Delivery 2 — durable wishlist and day moves implemented; collaboration extended in 036
 
 - [x] Trip wishlist/inbox independent of scheduled days; add from search/detail to inbox, assign later, remove, deduplicate. Persist per trip under RLS; do not use browser-only storage as a sync substitute.
 - [x] Atomic cross-day move RPC: serialize these RPCs on the trip, validate trip/day membership and expected source day, reject locked/stale items, clear affected route segments before FK change, clear start/end time explicitly, retain notes/duration/cost, invalidate both days.
 - [ ] Atomic same-day reorder and full optimistic versioning across existing direct item/recalculate APIs. The new trip lock does not serialize legacy endpoints; do not claim full conflict-free collaboration.
 - [ ] Drag-and-drop with equivalent keyboard move buttons, deterministic ordering and concurrent edit/version checks.
-- [ ] Editor/viewer invite links: expiry, revocation, hashed tokens, signed-in acceptance and owner-only membership management. Public read-only share links must never grant edit access.
+- [x] Editor/viewer invite links (036): expiry, revocation, hashed tokens, signed-in acceptance and owner-only membership management. Public read-only share links must never grant edit access.
 - [x] Trip identity/created-at immutable guard; only the owner may rotate public share tokens. Existing editor planning access retained; future owner-only fields must be added to this guard.
 - [x] Replace `get_shared_trip` SQL body with strict allowlist, removing trip preferences/day notes; test RPC directly as anon as well as HTTP wrapper.
 - [x] Local DB/API permission matrix for wishlist/move: anonymous, stranger, viewer, editor, owner; cross-trip IDs, stale expected day, locked items, unknown cost, rank-overflow rollback, route invalidation and direct anonymous share RPC.
-- [ ] Real multi-session concurrency testing, hosted signed-in smoke tests and invite expiry tests (invites not implemented).
+- [ ] Real multi-session concurrency testing, hosted signed-in smoke tests ; invitation expiry/revocation/replay are covered locally, not with hosted user sessions.
 
 Release gate: encrypted/controlled backup and restore verification before migration; append immutable migration 035+, RLS tests, no paid database branch.
 
-## Delivery 3 — group planning and actual expenses (NOT implemented yet)
+## Delivery 3 — group planning and actual expenses (implemented core in 036)
 
-- [ ] Expense ledger: THB defaults, payer, category, date, actual vs estimated amounts, refund handling, edit history and receipt privacy.
-- [ ] Participant groups (adults/children/families), equal/unequal/custom shares with integer satang arithmetic and exact reconciliation. Personal balances and settlement suggestions, **not money transfers**.
-- [ ] Shared checklist: assignee, due date, complete/uncomplete, reusable Thai travel packs, optimistic-concurrency handling.
-- [ ] Place/date voting: one member vote per option, clear close/reopen rules, no duplicate anonymous votes.
-- [ ] LINE-friendly public share title/preview and share action; no automatic posting or paid LINE messaging service.
+- [x] Expense ledger: THB defaults, payer, category, date, actual vs estimated amounts, refund handling, versioned corrections and change history. Public shares exclude the ledger; receipt attachments remain unimplemented.
+- [x] Named participants (adults/children/other), equal/custom selected-person shares with integer satang arithmetic and exact reconciliation. Personal balances, recorded transfers and settlement suggestions, **not actual money transfers**. Household/group hierarchy and weighted split presets remain outstanding.
+- [x] Shared checklist: assignee, due date, complete/uncomplete, reusable Thai travel packs, optimistic-concurrency handling.
+- [x] Manual place/date decision polls: one active choice per signed-in member/poll, clear close/reopen rules, no duplicate anonymous votes.
+- [x] LINE-friendly public share title/date metadata and share action; no automatic posting or paid LINE messaging service.
 
 Release gate: no ledger/receipts exposed via public links; non-member access denied; split totals always match expense amount exactly.
 
-## Delivery 4 — reservations and reliability (NOT implemented yet)
+## Delivery 4 — reservations implemented; reliability extensions open
 
-- [ ] Private reservation wallet: hotel/transport/activity records, reference number, check-in/out, contacts, cancellation/deposit deadlines; manual input first.
+- [x] Private reservation wallet (036): hotel/transport/activity records, reference number, check-in/out, contacts, cancellation/deposit deadlines; manual input first.
 - [ ] Private document storage and access checks; file size/type rules, signed downloads, retention/deletion. No Gmail scanning or paid OCR API.
 - [ ] Opt-in read-only offline/PWA cache with explicit sync timestamp, logout purge, no private wallet caching by default. Keep downloaded HTML described as a static snapshot, not offline sync.
 - [ ] Copy a public trip/template into a new owned draft; fresh IDs, revalidate publication and facts, never copy private notes/members/booking details.
