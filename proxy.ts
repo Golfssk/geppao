@@ -1,6 +1,7 @@
 import {NextResponse, type NextRequest} from 'next/server';
+import {refreshAuthSession} from '@/lib/supabase/proxy';
 // A validated preference only; never used as an authorization signal.
-export function proxy(request: NextRequest) {
+export async function proxy(request: NextRequest) {
   // Stop before async layouts can stream a soft 404. This does not grant access to real admin routes.
   const pathname = request.nextUrl.pathname;
   if ((pathname === '/demo/admin' || pathname.startsWith('/demo/admin/'))
@@ -16,7 +17,7 @@ export function proxy(request: NextRequest) {
   const locale = explicit === 'th' || explicit === 'en' ? explicit : saved === 'en' ? 'en' : 'th';
   const headers = new Headers(request.headers);
   headers.set('x-geppao-locale',locale);
-  const response = NextResponse.next({request: {headers}});
+  const response = await refreshAuthSession(request,headers);
   if (explicit === 'th' || explicit === 'en') response.cookies.set('geppao-locale',locale,{path:'/',sameSite:'lax',secure:request.nextUrl.protocol==='https:',maxAge:31536000});
   return response;
 }
