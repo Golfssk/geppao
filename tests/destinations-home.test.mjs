@@ -16,7 +16,7 @@ test('old explorer entry redirects to home while destination guides remain untou
 });
 test('homepage search uses unified catalog types and preserves language',()=>{
  const p=read('components/destinations/ThailandExplorer.tsx');assert.match(p,/<form action="\/search" method="get"/);assert.match(p,/name="lang" value=\{locale\}/);assert.match(p,/name="q" type="search"/);
- for(const type of ['all','accommodation','restaurant','cafe','attraction','activity'])assert.ok(p.includes(`option value="${type}"`));assert.doesNotMatch(p,/option value="stay"/);
+ assert.match(p,/<PlaceCategoryPicker\/>/);assert.doesNotMatch(p,/<select[^>]*name="type"/);
 });
 test('navigation has no duplicate go tab and treats destination guides as home discovery',()=>{
  const p=read('components/navigation/SiteChrome.tsx');assert.doesNotMatch(p,/\['\/go',/);assert.doesNotMatch(p,/href="\/stories"|\['\/stories',/);assert.match(p,/pathname.startsWith\('\/go\/'\)/);assert.match(p,/<Link href="\/">\{en\?'Destinations'/);
