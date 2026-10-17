@@ -19,6 +19,7 @@
     "test:search": "node --experimental-strip-types --test tests/search-*.test.mjs",
     "test:destinations": "node --experimental-strip-types --test tests/destinations-*.test.mjs",
     "test:visual": "playwright test",
+    "test:trip-settings": "node scripts/qa-trip-metadata.mjs",
     "test:planner": "node --experimental-strip-types --test tests/planner-*.test.mjs"
   },
   "dependencies": {

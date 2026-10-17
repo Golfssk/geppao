@@ -1,0 +1,36 @@
+// Actual React components in Chromium with an isolated, mocked network.
+// This is NOT hosted multi-account / Supabase acceptance. No external requests.
+import fs from 'node:fs/promises';import path from 'node:path';import os from 'node:os';import http from 'node:http';import assert from 'node:assert/strict';import {createRequire} from 'node:module';
+import {loadBindings,transform} from 'next/dist/build/swc/index.js';import {chromium} from 'playwright';
+const require=createRequire(import.meta.url),{webpack}=require('next/dist/compiled/webpack/webpack');
+const root=path.resolve(path.dirname(new URL(import.meta.url).pathname),'..'),temp=await fs.mkdtemp(path.join(os.tmpdir(),'geppao-trip-qa-')),output=process.env.QA_OUTPUT||temp;
+await fs.mkdir(output,{recursive:true});await loadBindings();
+const styles=Object.fromEntries(['panel','form','note','fields','actions','error','deleteWrap','deleteButton','deleteError','copyDraft'].map(k=>[k,k]));
+for(const name of ['TripMetadataEditor','DeleteTripButton']){
+ let src=await fs.readFile(path.join(root,'components/trips',name+'.tsx'),'utf8');src=src.replace(/import styles from '[^']+\.css';/,`const styles=${JSON.stringify(styles)};`).replaceAll("'@/components/i18n/LocaleProvider'","'./locale.js'").replaceAll("'@/lib/i18n/traveler'","'./traveler.js'").replaceAll("'next/navigation'","'./router.js'");
+ const {code}=await transform(src,{filename:name+'.tsx',jsc:{parser:{syntax:'typescript',tsx:true},transform:{react:{runtime:'automatic'}}},module:{type:'es6'}});await fs.writeFile(path.join(temp,name+'.js'),code);
+}
+const {code}=await transform(await fs.readFile(path.join(root,'lib/i18n/traveler.ts'),'utf8'),{filename:'traveler.ts',jsc:{parser:{syntax:'typescript'}},module:{type:'es6'}});await fs.writeFile(path.join(temp,'traveler.js'),code);
+await fs.writeFile(path.join(temp,'locale.js'),`export const useLocale=()=>({locale:window.qaLocale||'en'});`);
+await fs.writeFile(path.join(temp,'router.js'),`export const useRouter=()=>({refresh:()=>{window.refreshCount=(window.refreshCount||0)+1}});`);
+await fs.writeFile(path.join(temp,'entry.js'),`import React from 'react';import{createRoot}from'react-dom/client';import{TripMetadataEditor}from'./TripMetadataEditor.js';import{DeleteTripButton}from'./DeleteTripButton.js';const root=createRoot(document.getElementById('root'));window.trip={id:'39111111-1111-4111-8111-111111111111',title:'Synthetic QA trip',status:'draft',travelers:2,budget_total:null,plan_revision:5,currency:'THB'};window.renderQA=()=>root.render(React.createElement(React.Fragment,null,React.createElement(TripMetadataEditor,{trip:window.trip}),React.createElement(DeleteTripButton,{tripId:window.trip.id,title:window.trip.title,expectedVersion:window.trip.plan_revision})));window.renderQA();`);
+await new Promise((resolve,reject)=>webpack({mode:'development',devtool:false,entry:path.join(temp,'entry.js'),output:{path:temp,filename:'bundle.js'},resolve:{modules:[path.join(root,'node_modules'),'node_modules']},optimization:{minimize:false}},(err,stats)=>err?reject(err):stats.hasErrors()?reject(new Error(stats.toString({all:false,errors:true}))):resolve()));
+const css=await fs.readFile(path.join(root,'components/trips/TripMetadataEditor.module.css'),'utf8');
+const server=http.createServer(async(req,res)=>{if(req.url==='/bundle.js'){res.setHeader('Content-Type','text/javascript; charset=utf-8');res.end(await fs.readFile(path.join(temp,'bundle.js')))}else{res.setHeader('Content-Type','text/html; charset=utf-8');res.end(`<!doctype html><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><style>*{box-sizing:border-box}body{font-family:Arial,sans-serif;color:#153f2e;background:#fcfbf8;margin:0;padding:16px}main{max-width:1040px;margin:auto}.btn{border-radius:9px;padding:10px;border:1px solid #ccc;cursor:pointer}.btn-rust{background:#b75326;color:white}button:disabled{opacity:.5}${css}</style><main><h1>Isolated trip settings QA</h1><div id="root"></div></main><script src="/bundle.js"></script>`)}});
+await new Promise(r=>server.listen(0,'127.0.0.1',r));const origin=`http://127.0.0.1:${server.address().port}`;
+let browser;
+try{
+ browser=await chromium.launch({executablePath:process.env.PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH||chromium.executablePath(),headless:true,args:['--no-sandbox']});
+ for(const width of [1440,390])for(const locale of ['en','th']){
+  const page=await browser.newPage({viewport:{width,height:900}}),errors=[];page.on('pageerror',e=>errors.push(e.message));await page.addInitScript(l=>window.qaLocale=l,locale);
+  await page.route('**/*',route=>new URL(route.request().url()).origin===origin?route.continue():route.abort());let requests=[];
+  await page.route('**/api/trips/*',async route=>{requests.push(route.request().postDataJSON());await route.fulfill({status:409,json:{error:'Synthetic conflict'}})});
+  await page.goto(origin);await page.locator('summary').click();const label=locale==='en'?'Trip name':'ชื่อทริป',save=locale==='en'?'Save changes':'บันทึกการเปลี่ยนแปลง';
+  await page.locator('label').first().waitFor();await page.getByLabel(label,{exact:true}).fill('My unsaved draft');await page.getByRole('button',{name:save,exact:true}).click();await page.getByRole('alert').waitFor();assert.equal(requests.length,1);assert.equal(requests[0].expectedVersion,5);
+  await page.evaluate(()=>{window.trip={...window.trip,plan_revision:6,title:'Other editor'};window.renderQA()});assert.equal(await page.getByLabel(label,{exact:true}).inputValue(),'My unsaved draft');assert.equal(await page.getByRole('button',{name:save,exact:true}).isDisabled(),true);
+  assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth),true);assert.deepEqual(errors,[]);await page.screenshot({path:path.join(output,`trip-settings-${locale}-${width}.png`),fullPage:true});
+  await page.reload();await page.locator('summary').click();await page.getByLabel(label,{exact:true}).fill('Network draft');await page.unroute('**/api/trips/*');let uncertain=0;await page.route('**/api/trips/*',route=>{uncertain++;return route.abort()});await page.getByRole('button',{name:save,exact:true}).click();await page.getByRole('alert').waitFor();assert.equal(uncertain,1);assert.equal(await page.getByRole('button',{name:save,exact:true}).isDisabled(),true);
+  await page.reload();await page.unroute('**/api/trips/*');let deleted=[];await page.route('**/api/trips/*',route=>{deleted.push(route.request().postDataJSON());return route.abort()});let confirmation='';page.on('dialog',async d=>{confirmation=d.message();await d.accept()});await page.getByRole('button',{name:locale==='en'?'Delete trip':'ลบทริป',exact:true}).click();await page.getByRole('alert').waitFor();assert.equal(deleted.length,1);assert.equal(deleted[0].expectedVersion,5);assert.match(confirmation,locale==='en'?/other members/:/ข้อมูลของเพื่อน/);assert.equal(await page.getByRole('button',{name:locale==='en'?'Delete trip':'ลบทริป',exact:true}).isDisabled(),true);
+  console.log(`PASS actual components ${locale} ${width}px: conflict, draft preservation, uncertain save/delete, impact confirmation, overflow`);await page.close();
+ }
+}finally{if(browser)await browser.close();await new Promise(r=>server.close(r));await fs.rm(temp,{recursive:true,force:true})}

@@ -10,7 +10,7 @@ export async function tripMutation(request:Request,ctx:{params:Promise<{id:strin
  const {id}=await ctx.params;if(!tripUuid(id))return {response:tripFailure('ไม่พบทริป',404)};
  const s=await createClient(),{data:auth}=await s.auth.getUser();if(!auth.user)return {response:tripFailure('กรุณาเข้าสู่ระบบ',401)};
  let b:any;try{const text=await request.text();if(text.length>12000)return {response:tripFailure('ข้อมูลใหญ่เกินไป',413)};b=JSON.parse(text)}catch{return {response:tripFailure('ข้อมูลไม่ถูกต้อง',400)}}
- if(!b||typeof b!=='object'||Array.isArray(b))return {response:tripFailure('ข้อมูลไม่ถูกต้อง',400)};return {s,id,b};
+ if(!b||typeof b!=='object'||Array.isArray(b))return {response:tripFailure('ข้อมูลไม่ถูกต้อง',400)};return {s,id,b,userId:auth.user.id};
 }
 export function tripRpcResult(data:unknown,error:{code?:string}|null){
  if(error&&['23514','23502','23503','22P02','22003','22007','22008'].includes(error.code??''))return tripFailure('ข้อมูลไม่ถูกต้อง กรุณาตรวจจำนวนเงิน สมาชิก และวันที่',400);

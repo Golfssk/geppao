@@ -29,6 +29,8 @@ jobs:
           cache: npm
       - run: npm ci
       - run: npx playwright install --with-deps chromium
+      - name: Isolated trip settings component QA
+        run: npm run test:trip-settings
       - run: npm run build
       - run: npm run test:visual
         env:
