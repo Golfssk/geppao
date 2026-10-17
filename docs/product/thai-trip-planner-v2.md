@@ -12,21 +12,23 @@ User-approved scope: all gaps from the public Wanderlog comparison. This is a de
 - [x] Private item notes editor, preserving existing lock and viewer restrictions.
 - [x] Honest known/unknown price coverage instead of presenting incomplete total as a complete budget.
 - [x] Owner-only share/revoke API, affected-row checks, no raw SQL errors, same-origin mutation checks.
-- [x] Public HTTP share responses allowlist fields; private item notes, preferences and future wallet data excluded. Existing SQL RPC still requires hardening below before introducing private trip-level features.
+- [x] Public HTTP share responses allowlist fields; private item notes, preferences and future wallet data excluded. The SQL RPC is also hardened in Delivery 2 before adding private wishlist data.
 - [x] Read-only HTML download for offline reading, without private notes, credentials, booking docs, remote resources, or scripts. **Not a synchronized offline app.**
 - [x] Preserve saved schedule editing, sparse-rank ordering, lock/unlock and read-only sharing.
 
 No schema changes in Delivery 1. No migration needed, no production test records inserted.
 
-## Delivery 2 — durable wishlist, day moves, and collaboration (NOT implemented yet)
+## Delivery 2 — durable wishlist and day moves implemented; collaboration remains open
 
-- [ ] Trip wishlist/inbox independent of scheduled days; add from search/detail to inbox, assign later, remove, deduplicate. Persist per trip under RLS; do not use browser-only storage as a sync substitute.
-- [ ] Transactional cross-day move and reorder RPC: lock trip/affected days/items; check editor and locked state; clear stale route segments; move item; preserve local time relative to new date or explicitly clear schedule; invalidate both days' calculations. Current same-day composite route FKs mean a plain PATCH is unsafe.
+- [x] Trip wishlist/inbox independent of scheduled days; add from search/detail to inbox, assign later, remove, deduplicate. Persist per trip under RLS; do not use browser-only storage as a sync substitute.
+- [x] Atomic cross-day move RPC: serialize these RPCs on the trip, validate trip/day membership and expected source day, reject locked/stale items, clear affected route segments before FK change, clear start/end time explicitly, retain notes/duration/cost, invalidate both days.
+- [ ] Atomic same-day reorder and full optimistic versioning across existing direct item/recalculate APIs. The new trip lock does not serialize legacy endpoints; do not claim full conflict-free collaboration.
 - [ ] Drag-and-drop with equivalent keyboard move buttons, deterministic ordering and concurrent edit/version checks.
 - [ ] Editor/viewer invite links: expiry, revocation, hashed tokens, signed-in acceptance and owner-only membership management. Public read-only share links must never grant edit access.
-- [ ] Tighten direct Supabase policies/column privileges so editors cannot transfer ownership, rotate public tokens, or edit owner-only metadata through direct table access.
-- [ ] Replace `get_shared_trip` SQL body with strict allowlist, removing trip preferences/day notes; test RPC directly as anon as well as HTTP wrapper.
-- [ ] Permission matrix: anonymous, stranger, viewer, editor, owner; cross-trip IDs; concurrent mutations; expired invites; locked items.
+- [x] Trip identity/created-at immutable guard; only the owner may rotate public share tokens. Existing editor planning access retained; future owner-only fields must be added to this guard.
+- [x] Replace `get_shared_trip` SQL body with strict allowlist, removing trip preferences/day notes; test RPC directly as anon as well as HTTP wrapper.
+- [x] Local DB/API permission matrix for wishlist/move: anonymous, stranger, viewer, editor, owner; cross-trip IDs, stale expected day, locked items, unknown cost, rank-overflow rollback, route invalidation and direct anonymous share RPC.
+- [ ] Real multi-session concurrency testing, hosted signed-in smoke tests and invite expiry tests (invites not implemented).
 
 Release gate: encrypted/controlled backup and restore verification before migration; append immutable migration 035+, RLS tests, no paid database branch.
 
@@ -64,3 +66,15 @@ Release gate: no ledger/receipts exposed via public links; non-member access den
 - Only mark deployed after GitHub checks and production deployment confirmation.
 - Never describe coordinate diagrams/Haversine estimates as real road navigation. Google Maps outbound navigation remains external.
 - No paid Places/Routes/AI integrations, reservation scraping, unauthorized photos, or new recurring service subscriptions.
+
+## Map interaction addition
+
+- [x] Cursor-anchored mouse-wheel zoom on country and province SVGs, bounded zoom, reset and keyboard-operable +/- buttons. Wheel capture is scoped to the map; scrolling outside continues to scroll the page.
+- [x] Existing region/list/province/district selection and mobile scrolling retained. No paid map SDK added.
+
+## Delivery 2 rollout evidence
+
+- Append-only migration 035; migrations 001–034 unchanged. Local full-chain PGlite tests and API tests use synthetic local-only records.
+- Targeted pre-change function/grant/policy/schema snapshot retained outside Git; actual trip/day/item/segment tables were empty at preflight. This is not a full DB/Auth/Storage backup or independent staging. Existing owner-authorized free-target exception applies.
+- Recovery is app-first rollback preserving additive objects and all new data. A manual old-function definition is retained privately for diagnosis only; restoring the old share RPC would weaken privacy and requires explicit review.
+- Hosted mutation tests with real signed-in accounts remain unperformed. Production application deployment and migration verification must be confirmed separately in the PR.

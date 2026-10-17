@@ -28,6 +28,7 @@ export default async function TripPage({params}: {params: Promise<{id: string}>}
 
   if (!trip) notFound();
 
+  const {data:wishlist,error:wishlistError}=await supabase.from('trip_wishlist').select('id,place_id,event_id,created_at,places(id,name,slug),events(id,name,slug)').eq('trip_id',id).order('created_at');
   const candidates = [
     ...(places ?? []).map((place: any) => ({
       key: `p-${place.id}`,
@@ -50,7 +51,7 @@ export default async function TripPage({params}: {params: Promise<{id: string}>}
   return (
     <main className="page">
       <div className="container section trip-workspace-shell">
-        <TripWorkspace trip={trip} candidates={candidates} canEdit={trip.owner_user_id===auth.user.id||Boolean((await supabase.rpc('can_edit_trip',{target_trip_id:id})).data)} isOwner={trip.owner_user_id===auth.user.id} />
+        <TripWorkspace trip={trip} candidates={candidates} wishlist={wishlistError?null:wishlist??[]} canEdit={trip.owner_user_id===auth.user.id||Boolean((await supabase.rpc('can_edit_trip',{target_trip_id:id})).data)} isOwner={trip.owner_user_id===auth.user.id} />
       </div>
     </main>
   );
