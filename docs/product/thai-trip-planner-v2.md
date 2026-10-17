@@ -81,4 +81,6 @@ Release gate: no ledger/receipts exposed via public links; non-member access den
 
 ## Group delivery 036 — implementation complete, rollout gates tracked separately
 
-See [group-planning-release.md](group-planning-release.md) for precise scope, tests, limits and remaining work. Invitations, exact THB ledger/settlements, assigned checklists/Thai packs, member voting and a personal manual reservation wallet are implemented. Do not interpret the unchecked broader roadmap items above as completed in full: private attachments, LINE share, full concurrency, templates, offline sync and Thai planning/data expansion are still outstanding. Deployment and hosted migration evidence must be recorded before marking this delivery live.
+See [group-planning-release.md](group-planning-release.md) for precise scope, tests, limits and remaining work. Invitations, exact THB ledger/settlements, assigned checklists/Thai packs, member voting and a personal manual reservation wallet are implemented. Do not interpret the unchecked broader roadmap items above as completed in full: private attachments, full concurrency, templates, offline sync and Thai planning/data expansion are still outstanding. Deployment and hosted migration evidence must be recorded before marking this delivery live.
+
+- Group delivery also includes versioned personal reservation editing and a public LINE summary/share action with safe title/date metadata; LINE crawler rendering on actual devices remains an external acceptance check.

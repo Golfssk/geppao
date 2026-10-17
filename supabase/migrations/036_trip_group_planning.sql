@@ -4,7 +4,7 @@ set local lock_timeout='5s';set local statement_timeout='30s';
 alter table public.trip_members add column display_name text not null default 'สมาชิก' check(length(display_name) between 1 and 80);
 create table public.trip_invites(id uuid primary key default gen_random_uuid(),trip_id uuid not null references trips(id) on delete cascade,token_hash text not null unique,role text not null check(role in('editor','viewer')),expires_at timestamptz not null,created_at timestamptz not null default now(),revoked_at timestamptz,accepted_at timestamptz,accepted_by uuid);
 create table public.trip_people(id uuid primary key default gen_random_uuid(),trip_id uuid not null references trips(id) on delete cascade,name text not null check(length(name) between 1 and 80),kind text not null default 'adult' check(kind in('adult','child','other')),created_at timestamptz not null default now(),unique(id,trip_id));
-create table public.trip_expenses(id uuid primary key default gen_random_uuid(),trip_id uuid not null references trips(id) on delete cascade,title text not null check(length(title) between 1 and 200),amount_satang bigint not null check(amount_satang<>0 and abs(amount_satang)<=1000000000),payer_id uuid not null,shares jsonb not null,category text not null default 'other' check(category in('stay','food','transport','activity','other')),spent_on date not null default current_date,version integer not null default 1,updated_by uuid not null,created_at timestamptz not null default now(),foreign key(payer_id,trip_id) references trip_people(id,trip_id));
+create table public.trip_expenses(id uuid primary key default gen_random_uuid(),trip_id uuid not null references trips(id) on delete cascade,title text not null check(length(title) between 1 and 200),amount_satang bigint not null check(amount_satang<>0 and abs(amount_satang)<=1000000000),payer_id uuid not null,shares jsonb not null,category text not null default 'other' check(category in('stay','food','transport','activity','other')),spent_on date not null default ((now() at time zone 'Asia/Bangkok')::date),version integer not null default 1,updated_by uuid not null,created_at timestamptz not null default now(),foreign key(payer_id,trip_id) references trip_people(id,trip_id));
 create table public.trip_transfers(id uuid primary key default gen_random_uuid(),trip_id uuid not null references trips(id) on delete cascade,from_id uuid not null,to_id uuid not null,amount_satang bigint not null check(amount_satang>0 and amount_satang<=1000000000),created_at timestamptz not null default now(),foreign key(from_id,trip_id) references trip_people(id,trip_id),foreign key(to_id,trip_id) references trip_people(id,trip_id),check(from_id<>to_id));
 create table public.trip_checklist(id uuid primary key default gen_random_uuid(),trip_id uuid not null references trips(id) on delete cascade,title text not null check(length(title) between 1 and 200),assignee_id uuid,due_on date,is_done boolean not null default false,version integer not null default 1,created_at timestamptz not null default now(),foreign key(assignee_id,trip_id) references trip_people(id,trip_id));
 create table public.trip_polls(id uuid primary key default gen_random_uuid(),trip_id uuid not null references trips(id) on delete cascade,title text not null check(length(title) between 1 and 200),options jsonb not null,is_closed boolean not null default false,version integer not null default 1,created_at timestamptz not null default now());
@@ -88,7 +88,7 @@ begin
  -- Serialize group writes per trip; compare versions for edits so a stale tab cannot overwrite.
  perform 1 from trips where id=target_trip_id for update;
  if not public.can_read_trip(target_trip_id) then raise exception 'Membership required' using errcode='42501';end if;
- if action not in('vote','reservation_add','reservation_remove') and not public.can_edit_trip(target_trip_id) then raise exception 'Edit permission required' using errcode='42501';end if;
+ if action not in('vote','reservation_add','reservation_edit','reservation_remove') and not public.can_edit_trip(target_trip_id) then raise exception 'Edit permission required' using errcode='42501';end if;
  if jsonb_typeof(payload)<>'object' or octet_length(payload::text)>12000 then raise exception 'Invalid payload' using errcode='22023';end if;
  if (select count(*) from trip_group_audit where trip_id=target_trip_id)>=5000 then raise exception 'History quota reached' using errcode='22023';end if;
  if action='person_add' then
@@ -113,8 +113,8 @@ begin
    end loop;
    if total<>amount then raise exception 'Split must exactly match total' using errcode='22023';end if;
    if action='expense_add' then
-    insert into trip_expenses(trip_id,title,amount_satang,payer_id,shares,category,spent_on,updated_by) values(target_trip_id,trim(payload->>'title'),amount,(payload->>'payer_id')::uuid,payload->'shares',coalesce(payload->>'category','other'),coalesce(nullif(payload->>'spent_on','')::date,current_date),auth.uid()) returning id into result_id;
-   else update trip_expenses set title=trim(payload->>'title'),amount_satang=amount,payer_id=(payload->>'payer_id')::uuid,shares=payload->'shares',category=coalesce(payload->>'category','other'),spent_on=coalesce(nullif(payload->>'spent_on','')::date,current_date),updated_by=auth.uid(),version=version+1 where id=result_id;end if;
+    insert into trip_expenses(trip_id,title,amount_satang,payer_id,shares,category,spent_on,updated_by) values(target_trip_id,trim(payload->>'title'),amount,(payload->>'payer_id')::uuid,payload->'shares',coalesce(payload->>'category','other'),coalesce(nullif(payload->>'spent_on','')::date,(now() at time zone 'Asia/Bangkok')::date),auth.uid()) returning id into result_id;
+   else update trip_expenses set title=trim(payload->>'title'),amount_satang=amount,payer_id=(payload->>'payer_id')::uuid,shares=payload->'shares',category=coalesce(payload->>'category','other'),spent_on=coalesce(nullif(payload->>'spent_on','')::date,(now() at time zone 'Asia/Bangkok')::date),updated_by=auth.uid(),version=version+1 where id=result_id;end if;
   end if;
  elsif action='transfer_add' then
   if (select count(*) from trip_transfers where trip_id=target_trip_id)>=1000 then raise exception 'Transfer quota reached' using errcode='22023';end if;
@@ -150,15 +150,21 @@ begin
   if not found then raise exception 'Poll closed or unavailable' using errcode='22023';end if;
   idx=(payload->>'option_index')::integer;if idx is null or idx<0 or idx>=jsonb_array_length(opts) then raise exception 'Invalid option' using errcode='22023';end if;
   result_id=(payload->>'id')::uuid;insert into trip_votes(poll_id,user_id,option_index) values(result_id,auth.uid(),idx) on conflict(poll_id,user_id) do update set option_index=excluded.option_index;
- elsif action='reservation_add' then
-  if (select count(*) from trip_reservations where trip_id=target_trip_id and owner_id=auth.uid())>=100 then raise exception 'Reservation quota reached' using errcode='22023';end if;
-  insert into trip_reservations(trip_id,owner_id,title,kind,reference,starts_at,ends_at,deadline_at,contact,notes) values(target_trip_id,auth.uid(),trim(payload->>'title'),payload->>'kind',coalesce(payload->>'reference',''),nullif(payload->>'starts_at','')::timestamptz,nullif(payload->>'ends_at','')::timestamptz,nullif(payload->>'deadline_at','')::timestamptz,coalesce(payload->>'contact',''),coalesce(payload->>'notes','')) returning id into result_id;
+ elsif action in('reservation_add','reservation_edit') then
+  if action='reservation_edit' then
+   select id into result_id from trip_reservations where id=(payload->>'id')::uuid and trip_id=target_trip_id and owner_id=auth.uid() and version=(payload->>'version')::integer for update;
+   if not found then raise exception 'Reservation unavailable' using errcode='40001';end if;
+   update trip_reservations set title=trim(payload->>'title'),kind=payload->>'kind',reference=coalesce(payload->>'reference',''),starts_at=nullif(payload->>'starts_at','')::timestamptz,ends_at=nullif(payload->>'ends_at','')::timestamptz,deadline_at=nullif(payload->>'deadline_at','')::timestamptz,contact=coalesce(payload->>'contact',''),notes=coalesce(payload->>'notes',''),version=version+1 where id=result_id;
+  else
+   if (select count(*) from trip_reservations where trip_id=target_trip_id and owner_id=auth.uid())>=100 then raise exception 'Reservation quota reached' using errcode='22023';end if;
+   insert into trip_reservations(trip_id,owner_id,title,kind,reference,starts_at,ends_at,deadline_at,contact,notes) values(target_trip_id,auth.uid(),trim(payload->>'title'),payload->>'kind',coalesce(payload->>'reference',''),nullif(payload->>'starts_at','')::timestamptz,nullif(payload->>'ends_at','')::timestamptz,nullif(payload->>'deadline_at','')::timestamptz,coalesce(payload->>'contact',''),coalesce(payload->>'notes','')) returning id into result_id;
+  end if;
  elsif action='reservation_remove' then
   select id into result_id from trip_reservations where id=(payload->>'id')::uuid and trip_id=target_trip_id and owner_id=auth.uid() and version=(payload->>'version')::integer for update;
   if not found then raise exception 'Reservation unavailable' using errcode='40001';end if;delete from trip_reservations where id=result_id;
  else raise exception 'Unsupported action' using errcode='22023';end if;
  -- Personal wallet values are never copied into shared group audit history.
- if action not in('reservation_add','reservation_remove','vote') then insert into trip_group_audit(trip_id,actor_id,action,record_id,previous) values(target_trip_id,auth.uid(),action,result_id,old_row);end if;
+ if action not in('reservation_add','reservation_edit','reservation_remove','vote') then insert into trip_group_audit(trip_id,actor_id,action,record_id,previous) values(target_trip_id,auth.uid(),action,result_id,old_row);end if;
  return result_id;
 end $$;
 

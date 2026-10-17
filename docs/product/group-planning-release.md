@@ -7,7 +7,8 @@
 - Edit/remove expenses with expected-version checks; corrections to transfer records; per-person balances and suggested settlements. No banking, payment processing, receipts or exchange rates.
 - Assigned checklist tasks, due dates, versioned completion/removal, deduplicated road-trip/family/pet preparation packs.
 - One vote per signed-in member, change choice until closed, editor close/reopen. These are manual decision polls; no automatic itinerary replacement.
-- Personal manual reservation wallet: reference, Thailand-local start/end/deadline, contact and deposit/cancellation notes. Add/remove only; no provider cancellation action. Other members, including trip owner, cannot read another account's wallet.
+- Personal manual reservation wallet: reference, Thailand-local start/end/deadline, contact and deposit/cancellation notes. Versioned add/edit/remove; no provider cancellation action. Other members, including trip owner, cannot read another account's wallet.
+- Public share summary copy for LINE, explicit LINE share action, and title/date preview metadata. Only public allowlisted schedule fields are used; no automatic message posting.
 - Private group tools mounted after the existing trip workspace, Thai/English labels, desktop/mobile layouts, loading/error/retry and read-only controls.
 
 ## Security and limits
@@ -20,7 +21,7 @@ The latest-change view displays action and timestamp, not a full accounting/audi
 
 ## Verification
 
-- Local full regression: 356 passing tests. Migration chain runs in PGlite with synthetic auth/storage doubles, not real Supabase Auth/Storage.
+- Local full regression: 358 passing tests. Migration chain runs in PGlite with synthetic auth/storage doubles, not real Supabase Auth/Storage.
 - New database tests: owner/editor/viewer/stranger/anon, raw-write denial, cross-trip scope, invitation expiry/revocation/replay/no elevation, ledger exactness/refunds/rollback/stale versions, transfer correction, checklist pack dedupe, closed polls, wallet privacy and direct anonymous share allowlist.
 - New HTTP tests: same-origin, auth, invalid/oversized body, allowlisted dispatch, scoped trip ID and sanitized errors.
 - Source TypeScript check passed. Full CI build, real Supabase migration reset and deployment remain required gates.
@@ -33,4 +34,4 @@ Append-only 036, no venue/event updates. Before applying: record existing trip/m
 
 ## Still outside this delivery
 
-Drag-and-drop and full itinerary optimistic concurrency; integrated mobile Plan/Map/Expenses navigation and detail drawer; LINE public summary/preview; personal reservation editing/files/signed downloads/retention; offline/PWA synchronization/logout purge; template copying; nearby alternatives and suitability-aware replanning; richer Thai departure/return/adult/child/elderly/pet and whole-villa pricing constraints; nationwide planning-ready data workflow and real-user usability studies. Existing offline HTML remains a static snapshot, not offline maps or sync.
+Drag-and-drop and full itinerary optimistic concurrency; integrated mobile Plan/Map/Expenses navigation and detail drawer; personal reservation files/signed downloads/retention; offline/PWA synchronization/logout purge; template copying; nearby alternatives and suitability-aware replanning; richer Thai departure/return/adult/child/elderly/pet and whole-villa pricing constraints; nationwide planning-ready data workflow and real-user usability studies. Existing offline HTML remains a static snapshot, not offline maps or sync.
