@@ -78,3 +78,7 @@ Release gate: no ledger/receipts exposed via public links; non-member access den
 - Targeted pre-change function/grant/policy/schema snapshot retained outside Git; actual trip/day/item/segment tables were empty at preflight. This is not a full DB/Auth/Storage backup or independent staging. Existing owner-authorized free-target exception applies.
 - Recovery is app-first rollback preserving additive objects and all new data. A manual old-function definition is retained privately for diagnosis only; restoring the old share RPC would weaken privacy and requires explicit review.
 - Hosted mutation tests with real signed-in accounts remain unperformed. Production application deployment and migration verification must be confirmed separately in the PR.
+
+## Group delivery 036 — implementation complete, rollout gates tracked separately
+
+See [group-planning-release.md](group-planning-release.md) for precise scope, tests, limits and remaining work. Invitations, exact THB ledger/settlements, assigned checklists/Thai packs, member voting and a personal manual reservation wallet are implemented. Do not interpret the unchecked broader roadmap items above as completed in full: private attachments, LINE share, full concurrency, templates, offline sync and Thai planning/data expansion are still outstanding. Deployment and hosted migration evidence must be recorded before marking this delivery live.
