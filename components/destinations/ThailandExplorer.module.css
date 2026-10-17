@@ -31,3 +31,6 @@
 .wheelControls{position:absolute;right:14px;bottom:64px;display:flex;flex-direction:column;border:1px solid #b8cbb3;border-radius:8px;overflow:hidden;box-shadow:0 2px 8px #26483110}.wheelControls button{background:white;color:#214d32;border:0;font:inherit;font-size:24px;min-width:44px;min-height:44px;cursor:pointer}.wheelControls button+button{border-top:1px solid #e0e7dc}.wheelControls button:disabled{color:#899a84;cursor:default}.wheelControls .fitMap{font-size:14px;padding:8px}.wheelControls button:focus-visible{outline:3px solid #b17533;outline-offset:-3px}.zoomHint{max-width:340px}@media(max-width:760px){.wheelControls{right:12px;bottom:60px}.zoomHint{max-width:220px}}
 
 .searchCategories{grid-column:1/-1;min-width:0}.searchCategories fieldset{margin-bottom:0}
+
+/* Mouse right-drag applies to the SVG only, not page controls or touch scrolling. */
+.map[data-map-panning=true],.map[data-map-panning=true] *{cursor:grabbing!important;user-select:none}
