@@ -1,6 +1,6 @@
 import test from 'node:test';import assert from 'node:assert/strict';import React from 'react';import {renderToStaticMarkup} from 'react-dom/server';
 import {sourceModule} from './intake-route-fixture.mjs';import {safeAuthNext} from '../lib/auth/redirect.ts';
-const css=new Proxy({},{get:(_,k)=>String(k)});
+const css={shell:'shell',form:'form',googleButton:'googleButton'};
 function hooks(){const slots=[];let index=0;return{react:{...React,useState(initial){const i=index++;if(!(i in slots))slots[i]=typeof initial==='function'?initial():initial;return[slots[i],v=>{slots[i]=typeof v==='function'?v(slots[i]):v}]},useRef(initial){const i=index++;if(!(i in slots))slots[i]={current:initial};return slots[i]}},render(C,props){index=0;return C(props)}}}
 function all(tree,predicate,out=[]){if(!tree||typeof tree!=='object')return out;if(predicate(tree))out.push(tree);for(const c of [tree.props?.children].flat(Infinity))all(c,predicate,out);return out}
 const form=t=>all(t,n=>n.type==='form')[0];
@@ -8,7 +8,7 @@ const google=t=>all(t,n=>n.type==='button'&&n.props.className==='googleButton')[
 async function component(h,auth,router,locale=()=> 'en'){
  return (await sourceModule('components/host/HostLoginForm.tsx',{'react':h?.react??React,'@supabase/ssr':{createBrowserClient:()=>({auth})},'next/navigation':{useRouter:()=>router},'@/components/i18n/LocaleProvider':{useLocale:()=>({locale:locale()})},'@/lib/auth/redirect':{safeAuthNext},'./HostLoginForm.module.css':css},{process:{env:{}},window:{location:{origin:'https://example.test'}}})).HostLoginForm;
 }
-for(const locale of ['th','en'])test('auth form has localized accessible fields and error: '+locale,async()=>{const C=await component(null,{}, {},()=>locale);const html=renderToStaticMarkup(React.createElement(C,{oauthError:true}));assert.match(html,/autocomplete="email"/);assert.match(html,/autocomplete="current-password"/);assert.match(html,/role="alert"/);if(locale==='en')assert.doesNotMatch(html,/[ก-๙]/);else assert.match(html,/เข้าสู่ระบบ/)});
+for(const locale of ['th','en'])test('auth form has localized accessible fields and error: '+locale,async()=>{const C=await component(null,{}, {},()=>locale);const html=renderToStaticMarkup(React.createElement(C,{oauthError:true}));assert.match(html,/autoComplete="email"/i);assert.match(html,/autoComplete="current-password"/i);assert.match(html,/role="alert"/);if(locale==='en')assert.doesNotMatch(html,/[ก-๙]/);else assert.match(html,/เข้าสู่ระบบ/)});
 test('password login blocks duplicate/cross-provider submissions and navigates only on success',async()=>{
  const h=hooks();let calls=0,oauth=0,resolve;const nav=[];
  const C=await component(h,{signInWithPassword:async()=>{calls++;return new Promise(r=>resolve=r)},signInWithOAuth:async()=>{oauth++;return{error:null}}},{replace:p=>nav.push(p),refresh:()=>nav.push('refresh')});
