@@ -16,6 +16,9 @@ export function safeAuthNext(value:unknown):string{
   const url=new URL(value,BASE),normalized=new URL(decoded,BASE);
   if(url.origin!==BASE||normalized.origin!==BASE)return FALLBACK;
   for(const candidate of [url,normalized]){
+   // /safe/..//host becomes //host after URL normalization. Returning that
+   // pathname would turn a subsequent new URL(next,origin) into an external URL.
+   if(candidate.pathname.startsWith('//'))return FALLBACK;
    const path=candidate.pathname.replace(/\/+$/,'')||'/';
    if(path==='/login'||path==='/host/login'||path==='/auth'||path.startsWith('/auth/'))return FALLBACK;
   }
