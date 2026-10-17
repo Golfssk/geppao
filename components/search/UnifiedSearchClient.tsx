@@ -1,11 +1,12 @@
 'use client';
 import Link from 'next/link';
+import {PlaceCategoryPicker} from './PlaceCategoryPicker';
 import {AddToTripButton} from '@/components/trips/AddToTripButton';
 import {useEffect,useRef,useState} from 'react';
 import {useLocale} from '@/components/i18n/LocaleProvider';
 import {trackProductEvent} from '@/lib/analytics/client';
 import {EventInterestButton} from '@/components/analytics/EventInterestButton';
-import {SEARCH_TYPES,searchQueryParams,type SearchQuery,type SearchType} from '@/lib/search/query';
+import {searchQueryParams,type SearchQuery,type SearchType} from '@/lib/search/query';
 import {STAY_PAGE_SIZE} from '@/lib/stays/query';
 import type {SearchResult} from '@/lib/search/types';
 import type {StayDestination} from '@/lib/stays/types';
@@ -31,13 +32,14 @@ export function UnifiedSearchClient({initialQuery:query,initialResult:result,ini
     <div className={styles.wrap}>
       <form action="/search" method="get" className={styles.panel} onSubmit={()=>setBusy(true)}>
         <input type="hidden" name="lang" value={locale}/>
+        <PlaceCategoryPicker value={selectedType} onChange={setSelectedType}/>
         <div className={styles.searchGrid}>
-          <label>{en?'What are you looking for?':'อยากค้นหาอะไร'}<select name="type" value={selectedType} onChange={e=>setSelectedType(e.target.value as SearchType)}>{SEARCH_TYPES.map(type=><option key={type} value={type}>{names[type]}</option>)}</select></label>
+
           <label className={styles.query}>{en?'Place, area or inspiration':'ชื่อสถานที่ ย่าน หรือสิ่งที่อยากทำ'}<input type="search" name="q" maxLength={100} defaultValue={query.q} placeholder={en?'Try Khao Yai, coffee or a pool villa':'เช่น เขาใหญ่ คาเฟ่ หรือพูลวิลล่า'}/></label>
           <label>{en?'Destination':'จุดหมาย'}<select name="destination" defaultValue={query.destination}><option value="">{en?'All destinations':'ทุกจุดหมาย'}</option>{destinations.map(d=><option key={d.slug} value={d.slug}>{d.name}</option>)}</select></label>
           <button className={styles.primary} type="submit" disabled={busy}>{busy?(en?'Searching…':'กำลังค้นหา…'):(en?'Search':'ค้นหา')} <span aria-hidden="true">↗</span></button>
         </div>
-        <details className={styles.filters} open={Boolean(query.pet||query.parking||query.accessible||query.verified||query.capacityOnly||query.checkIn||query.maxPrice!==null||query.sort!=='name')}>
+        <details className={styles.filters} open={Boolean(lodging||query.pet||query.parking||query.accessible||query.verified||query.capacityOnly||query.checkIn||query.maxPrice!==null||query.sort!=='name')}>
           <summary>{en?'Refine your search':'ตัวกรองเพิ่มเติม'}<span aria-hidden="true">＋</span></summary>
           <div className={styles.filterBody}>
             <fieldset className={styles.amenities}><legend>{en?'Confirmed information only':'เลือกจากข้อมูลที่ยืนยันว่ามี'}</legend>{([['pet',en?'Pets allowed':'รองรับสัตว์เลี้ยง',query.pet],['parking',en?'Parking':'มีที่จอดรถ',query.parking],['accessible',en?'Accessibility supported':'รองรับการเข้าถึง',query.accessible],['verified',en?'Verified information':'ข้อมูลยืนยันแล้ว',query.verified]] as const).map(([name,label,checked])=><label key={name}><input type="checkbox" name={name} value="1" defaultChecked={checked}/>{label}</label>)}</fieldset>
