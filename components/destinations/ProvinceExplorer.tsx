@@ -1,6 +1,7 @@
 'use client';
 import {useEffect,useId,useMemo,useRef,useState} from 'react';
 import {useWheelCamera} from './useWheelCamera';
+import type {Camera} from '@/lib/destinations/wheel-camera';
 import {useLocale} from '@/components/i18n/LocaleProvider';
 import {provinceData,provinceSearchHref} from '@/lib/destinations/thailand';
 import {terrainTiles,zoomViewBox,placeKind,districtLabels,layoutPlacePins,type ProvinceMapData,type MapPlace} from '@/lib/destinations/province-map';
@@ -18,6 +19,7 @@ export function ProvinceExplorer({provinceId,onBack,onProvince}:{provinceId:stri
  const [error,setError]=useState(false),[attempt,setAttempt]=useState(0),[terrain,setTerrain]=useState(true);
  const [failedTiles,setFailedTiles]=useState<string[]>([]),[loadedTiles,setLoadedTiles]=useState<string[]>([]);
  const [district,setDistrict]=useState(''),[place,setPlace]=useState(''),[zoom,setZoom]=useState(1),[center,setCenter]=useState<[number,number]|undefined>();
+ const [pointerView,setPointerView]=useState<Camera|null>(null);
  const svgRef=useRef<SVGSVGElement>(null);
  useEffect(()=>{
   if(cache.has(provinceId)){setData(cache.get(provinceId)!);return}
@@ -26,17 +28,17 @@ export function ProvinceExplorer({provinceId,onBack,onProvince}:{provinceId:stri
   return ()=>abort.abort();
  },[provinceId,attempt]);
  const tiles=useMemo(()=>data?terrainTiles(data):[],[data]);
- const view=data?zoomViewBox(data.viewBox,zoom,center,.25):[0,0,1000,1000];
- useWheelCamera(svgRef,data?.viewBox??[0,0,1000,1000],view as [number,number,number,number],next=>{if(data){setZoom(data.viewBox[2]/next[2]);setCenter([next[0]+next[2]/2,next[1]+next[3]/2])}},Boolean(data));
+ const view=pointerView??(data?zoomViewBox(data.viewBox,zoom,center):[0,0,1000,1000]);
+ useWheelCamera(svgRef,data?.viewBox??[0,0,1000,1000],view as [number,number,number,number],next=>{if(data){setPointerView(next);setZoom(data.viewBox[2]/next[2]);setCenter([next[0]+next[2]/2,next[1]+next[3]/2])}},Boolean(data));
  const activePlace=data?.places.find(p=>p.id===place),activeDistrict=data?.districts.find(d=>d.id===district);
  const shownPlaces=data?.places??[];
  const [size,setSize]=useState({width:760,height:540});
  useEffect(()=>{const svg=svgRef.current;if(!svg)return;const observer=new ResizeObserver(entries=>{const r=entries[0].contentRect;setSize({width:r.width,height:r.height})});observer.observe(svg);return()=>observer.disconnect()},[data]);
  const unit=Math.max(view[2]/size.width,view[3]/size.height); // Marker sizes follow the current viewport, not the geographic extent.
- function pickPlace(p:MapPlace){setPlace(p.id);setCenter([p.x,p.y]);setZoom(2)}
- function reset(){setZoom(1);setCenter(undefined);setDistrict('');setPlace('')}
- function pickDistrict(id:string){setDistrict(id);setPlace('');const d=data?.districts.find(d=>d.id===id);if(d){setCenter([d.x,d.y]);setZoom(2)}else{setZoom(1);setCenter(undefined)}}
- function zoomAt(delta:number){setZoom(z=>Math.max(1,Math.min(4,z+delta)))}
+ function pickPlace(p:MapPlace){setPointerView(null);setPlace(p.id);setCenter([p.x,p.y]);setZoom(2)}
+ function reset(){setPointerView(null);setZoom(1);setCenter(undefined);setDistrict('');setPlace('')}
+ function pickDistrict(id:string){setPointerView(null);setDistrict(id);setPlace('');const d=data?.districts.find(d=>d.id===id);if(d){setCenter([d.x,d.y]);setZoom(2)}else{setZoom(1);setCenter(undefined)}}
+ function zoomAt(delta:number){setPointerView(null);setZoom(z=>Math.max(1,Math.min(4,z+delta)))}
  const allTilesFailed=tiles.length>0&&failedTiles.length===tiles.length;
  const terrainVisible=terrain&&!allTilesFailed;
  return <section className={s.provinceView} data-province-view={provinceId} aria-label={en?'Province explorer':'สำรวจจังหวัด'}>
