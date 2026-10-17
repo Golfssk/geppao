@@ -1,7 +1,6 @@
 import {notFound, redirect} from 'next/navigation';
 import {createClient} from '@/lib/supabase/server';
-import {TripGroupTools} from '@/components/trips/TripGroupTools';
-import {TripWorkspace} from '@/components/trips/TripWorkspace';
+import {TripExperience} from '@/components/trips/TripExperience';
 
 export const dynamic = 'force-dynamic';
 
@@ -54,8 +53,7 @@ export default async function TripPage({params}: {params: Promise<{id: string}>}
   return (
     <main className="page">
       <div className="container section trip-workspace-shell">
-        <TripWorkspace trip={trip} candidates={candidates} wishlist={wishlistError?null:wishlist??[]} canEdit={canEdit} isOwner={isOwner} />
-        <TripGroupTools tripId={id} canEdit={canEdit} isOwner={isOwner} currentUserId={auth.user.id}/>
+        <TripExperience trip={trip} candidates={candidates} wishlist={wishlistError?null:wishlist??[]} canEdit={canEdit} isOwner={isOwner} currentUserId={auth.user.id} />
       </div>
     </main>
   );
