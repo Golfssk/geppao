@@ -11,6 +11,7 @@ export async function tripMutation(request:Request,ctx:{params:Promise<{id:strin
  if(!b||typeof b!=='object'||Array.isArray(b))return {response:tripFailure('ข้อมูลไม่ถูกต้อง',400)};return {s,id,b};
 }
 export function tripRpcResult(data:unknown,error:{code?:string}|null){
- if(error)return tripFailure(error.code==='42501'?'ไม่มีสิทธิ์แก้ไขทริปนี้':error.code==='55000'?'กรุณาปลดล็อกรายการก่อนย้าย':error.code==='40001'?'รายการเปลี่ยนไปแล้ว กรุณาโหลดทริปใหม่':error.code==='22023'?'สถานที่หรือวันที่เลือกยังไม่พร้อมใช้':'บันทึกไม่สำเร็จ กรุณาลองใหม่',['42501'].includes(error.code??'')?403:['40001','55000','22023'].includes(error.code??'')?409:503);
+ if(error&&['23514','23502','23503','22P02','22003','22007','22008'].includes(error.code??''))return tripFailure('ข้อมูลไม่ถูกต้อง กรุณาตรวจจำนวนเงิน สมาชิก และวันที่',400);
+ if(error)return tripFailure(error.code==='42501'?'ไม่มีสิทธิ์แก้ไขทริปนี้':error.code==='55000'?'กรุณาปลดล็อกรายการก่อนย้าย':error.code==='40001'?'รายการเปลี่ยนไปแล้ว กรุณาโหลดทริปใหม่':error.code==='22023'?'ข้อมูลหรือรายการที่เลือกยังไม่พร้อมใช้ กรุณาตรวจแล้วลองใหม่':'บันทึกไม่สำเร็จ กรุณาลองใหม่',['42501'].includes(error.code??'')?403:['40001','55000','22023'].includes(error.code??'')?409:503);
  return NextResponse.json({success:true,id:data},{headers:{'Cache-Control':'no-store'}});
 }

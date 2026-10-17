@@ -1,0 +1,2 @@
+import {tripMutation,tripRpcResult,tripFailure} from '@/lib/trips/mutation';
+export async function POST(request:Request,ctx:{params:Promise<{token:string}>}){const{token}=await ctx.params;const c=await tripMutation(request,{params:Promise.resolve({id:token})});if(c.response)return c.response;const name=c.b.name;if(typeof name!=='string'||name.trim().length<1||name.trim().length>80)return tripFailure('ระบุชื่อที่ใช้ในทริป 1–80 ตัวอักษร',400);const{data,error}=await c.s.rpc('accept_trip_invite',{invite_token:token,member_name:name.trim()});return tripRpcResult(data,error)}
