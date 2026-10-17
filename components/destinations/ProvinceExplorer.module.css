@@ -11,3 +11,6 @@
 .placeList button:focus-visible{outline:2px solid #a9572c;outline-offset:-3px;border-radius:10px}.placeInfo a:focus-visible{outline:2px solid #a9572c;outline-offset:2px}
 
 .wheelHint{padding:12px 24px 0;font-size:14px;color:#536b4e;line-height:1.6}
+
+/* Mouse right-drag applies to the SVG only, not page controls or touch scrolling. */
+.map[data-map-panning=true],.map[data-map-panning=true] *{cursor:grabbing!important;user-select:none}

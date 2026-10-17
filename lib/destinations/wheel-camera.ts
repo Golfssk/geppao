@@ -8,3 +8,9 @@ export function zoomCamera(base:Camera,current:Camera,factor:number,anchor:[numb
 export function wheelFactor(delta:number,mode:number,pageHeight=540){
  const pixels=delta*(mode===1?16:mode===2?pageHeight:1);return Math.exp(Math.max(-240,Math.min(240,pixels))*.0025);
 }
+/** Content follows the pointer. A quarter-viewport gutter allows dragging even at fit, without losing the map. */
+export function panCamera(base:Camera,current:Camera,dx:number,dy:number):Camera {
+ if(![...base,...current,dx,dy].every(Number.isFinite)||base[2]<=0||base[3]<=0||current[2]<=0||current[3]<=0)return current;
+ const px=current[2]/4,py=current[3]/4;
+ return [Math.max(base[0]-px,Math.min(base[0]+Math.max(0,base[2]-current[2])+px,current[0]-dx)),Math.max(base[1]-py,Math.min(base[1]+Math.max(0,base[3]-current[3])+py,current[1]-dy)),current[2],current[3]];
+}

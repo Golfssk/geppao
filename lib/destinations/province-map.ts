@@ -16,10 +16,11 @@ export function terrainTiles(data:ProvinceMapData):TerrainTile[]{
  for(let x=a;x<=c;x++)for(let y=b;y<=d;y++)result.push({id:`${z}/${y}/${x}`,url:`${terrainSource}/tile/${z}/${y}/${x}`,x:(x/n-data.origin[0])/data.unit,y:(y/n-data.origin[1])/data.unit,size:1/n/data.unit});
  return result;
 }
-export function zoomViewBox(base:[number,number,number,number],zoom:number,center?:[number,number]):[number,number,number,number]{
+export function zoomViewBox(base:[number,number,number,number],zoom:number,center?:[number,number],panGutter=0):[number,number,number,number]{
  const z=Math.max(1,Math.min(4,zoom));const [x,y,w,h]=base,cx=center?.[0]??x+w/2,cy=center?.[1]??y+h/2;
  const width=w/z,height=h/z;
- return [Math.max(x,Math.min(x+w-width,cx-width/2)),Math.max(y,Math.min(y+h-height,cy-height/2)),width,height];
+ const px=width*panGutter,py=height*panGutter;
+ return [Math.max(x-px,Math.min(x+w-width+px,cx-width/2)),Math.max(y-py,Math.min(y+h-height+py,cy-height/2)),width,height];
 }
 export function placeKind(kind:string,en:boolean){
  const labels:Record<string,[string,string]>={waterfall:['น้ำตก','Waterfall'],spring:['บ่อน้ำผุดธรรมชาติ','Natural spring'],dam:['เขื่อน','Dam'],museum:['พิพิธภัณฑ์','Museum'],viewpoint:['จุดชมวิว','Viewpoint'],visitor:['ศูนย์บริการนักท่องเที่ยว','Visitor centre'],park:['อุทยาน','Park'],attraction:['สถานที่น่าสนใจ','Point of interest']};
