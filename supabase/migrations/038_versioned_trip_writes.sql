@@ -48,7 +48,7 @@ create function public.mutate_trip_item(target_trip_id uuid,expected_revision bi
 declare i trip_items; did uuid; pid uuid; eid uuid; result uuid; start_time timestamptz; end_time timestamptz; cost numeric; duration int; k text;
 begin
  perform lock_trip_plan(target_trip_id,expected_revision);
- if jsonb_typeof(payload)<>'object' then raise exception 'Invalid payload' using errcode='22023'; end if;
+ if jsonb_typeof(payload) is distinct from 'object' then raise exception 'Invalid payload' using errcode='22023'; end if;
  if action='add' then
   did:=(payload->>'tripDayId')::uuid; pid:=(payload->>'placeId')::uuid; eid:=(payload->>'eventId')::uuid;
   if not exists(select 1 from trip_days where id=did and trip_id=target_trip_id) or (pid is null)=(eid is null) then raise exception 'Invalid source/day' using errcode='22023'; end if;
@@ -106,7 +106,7 @@ begin
  perform 1 from trips where id=target_trip_id and owner_user_id=auth.uid() for update;
  if not found or auth.uid() is null then raise exception 'Not permitted' using errcode='42501'; end if;
  if exists(select 1 from trip_items i join trip_days d on d.id=i.trip_day_id where d.trip_id=target_trip_id) then raise exception 'Plan already populated' using errcode='40001'; end if;
- if jsonb_typeof(plan_items)<>'array' or jsonb_array_length(plan_items) not between 1 and 100 then raise exception 'Invalid items' using errcode='22023'; end if;
+ if jsonb_typeof(plan_items) is distinct from 'array' or jsonb_array_length(plan_items) not between 1 and 100 then raise exception 'Invalid items' using errcode='22023'; end if;
  for x in select value from jsonb_array_elements(plan_items) loop
   did:=(x->>'trip_day_id')::uuid; pid:=(x->>'place_id')::uuid; eid:=(x->>'event_id')::uuid;
   if not exists(select 1 from trip_days where id=did and trip_id=target_trip_id) or (pid is null)=(eid is null) then raise exception 'Invalid source/day' using errcode='22023'; end if;
@@ -143,7 +143,7 @@ declare d jsonb; x jsonb; seg jsonb; did uuid; i trip_items; duration int; cost 
 begin
  perform lock_trip_plan(target_trip_id,expected_revision);
  if (trip_calculation_snapshot(target_trip_id)->>'fingerprint') is distinct from expected_fingerprint then raise exception 'Planning inputs changed' using errcode='40001'; end if;
- if jsonb_typeof(calculated_days)<>'array' or jsonb_array_length(calculated_days)<>(select count(*) from trip_days where trip_id=target_trip_id) or exists(select 1 from jsonb_array_elements(calculated_days) v group by v->>'dayId' having count(*)>1) then raise exception 'Incomplete days' using errcode='22023'; end if;
+ if jsonb_typeof(calculated_days) is distinct from 'array' or jsonb_array_length(calculated_days)<>(select count(*) from trip_days where trip_id=target_trip_id) or exists(select 1 from jsonb_array_elements(calculated_days) v group by v->>'dayId' having count(*)>1) then raise exception 'Incomplete days' using errcode='22023'; end if;
  for d in select value from jsonb_array_elements(calculated_days) loop
   did:=(d->>'dayId')::uuid;
   if not exists(select 1 from trip_days where id=did and trip_id=target_trip_id) or jsonb_typeof(d->'items') is distinct from 'array' or jsonb_array_length(d->'items')<>(select count(*) from trip_items where trip_day_id=did) or exists(select 1 from jsonb_array_elements(d->'items') v group by v->>'itemId' having count(*)>1) or jsonb_typeof(d->'routeSegments') is distinct from 'array' or jsonb_array_length(d->'routeSegments')>100 then raise exception 'Incomplete items' using errcode='22023'; end if;
