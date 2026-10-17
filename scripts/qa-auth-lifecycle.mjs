@@ -1,0 +1,34 @@
+// Actual React in local Chromium; synthetic Auth only, no hosted acceptance.
+import fs from 'node:fs/promises';import path from 'node:path';import os from 'node:os';import http from 'node:http';import assert from 'node:assert/strict';import {createRequire} from 'node:module';
+import {loadBindings,transform} from 'next/dist/build/swc/index.js';import {chromium} from 'playwright';
+const require=createRequire(import.meta.url),{webpack}=require('next/dist/compiled/webpack/webpack');
+const root=path.resolve(path.dirname(new URL(import.meta.url).pathname),'..'),temp=await fs.mkdtemp(path.join(os.tmpdir(),'geppao-auth-qa-'));
+await loadBindings();
+for(const name of ['AuthSessionBoundary','UserNav']){
+ let src=await fs.readFile(path.join(root,'components/auth',name+'.tsx'),'utf8');
+ src=src.replace(/import styles from '[^']+\.css';/,`const styles={};`).replaceAll("'@/components/i18n/LocaleProvider'","'./locale.js'").replaceAll("'@/lib/auth/navigation'","'./navigation.js'").replaceAll("'@supabase/ssr'","'./auth.js'").replaceAll("'next/navigation'","'./router.js'").replaceAll("'next/link'","'./link.js'");
+ const {code}=await transform(src,{filename:name+'.tsx',jsc:{parser:{syntax:'typescript',tsx:true},transform:{react:{runtime:'automatic'}}},module:{type:'es6'}});await fs.writeFile(path.join(temp,name+'.js'),code);
+}
+await fs.writeFile(path.join(temp,'locale.js'),`export const useLocale=()=>({locale:window.qaLocale||'en'});`);
+await fs.writeFile(path.join(temp,'router.js'),`export const usePathname=()=>'/trips/synthetic';`);
+await fs.writeFile(path.join(temp,'link.js'),`export default function Link(){return null}`);
+await fs.writeFile(path.join(temp,'navigation.js'),`export function hardAuthNavigate(path){window.dispatchEvent(new Event('geppao:auth-navigation'));window.destinations.push(path)}`);
+await fs.writeFile(path.join(temp,'auth.js'),`let cb;const channel=new BroadcastChannel('synthetic-auth-lifecycle');window.destinations=[];window.providerMode='same';window.emitAuth=(id)=>cb?.('SIGNED_IN',id?{user:{id}}:null);channel.onmessage=e=>window.emitAuth(e.data);window.broadcastAuth=id=>channel.postMessage(id);export const createBrowserClient=()=>({auth:{onAuthStateChange(fn){cb=fn;window.ready=true;return{data:{subscription:{unsubscribe(){cb=null}}}}},async getUser(){window.checks=(window.checks||0)+1;if(window.providerMode==='outage')throw Error('Synthetic outage');return{data:{user:{id:'a'}},error:null}},async signOut(){window.signouts=(window.signouts||0)+1;return{error:null}}}});`);
+await fs.writeFile(path.join(temp,'entry.js'),`import React from'react';import{createRoot}from'react-dom/client';import{AuthSessionBoundary}from'./AuthSessionBoundary.js';import{UserNav}from'./UserNav.js';createRoot(document.getElementById('root')).render(React.createElement(AuthSessionBoundary,{userId:'a'},React.createElement('main',null,React.createElement('h1',null,'Synthetic private trip'),React.createElement('input',{'aria-label':'Unsaved draft',defaultValue:'draft'}),React.createElement(UserNav,{name:'Synthetic',email:'test@example.invalid',isAdmin:false}))));`);
+await new Promise((resolve,reject)=>webpack({mode:'development',devtool:false,entry:path.join(temp,'entry.js'),output:{path:temp,filename:'bundle.js'},resolve:{modules:[path.join(root,'node_modules'),'node_modules']},plugins:[new webpack.DefinePlugin({'process.env.NEXT_PUBLIC_SUPABASE_URL':JSON.stringify('https://example.invalid'),'process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY':JSON.stringify('synthetic')})],optimization:{minimize:false}},(err,stats)=>err?reject(err):stats.hasErrors()?reject(Error(stats.toString({all:false,errors:true}))):resolve()));
+const server=http.createServer(async(req,res)=>{res.setHeader('Content-Type',req.url==='/bundle.js'?'text/javascript; charset=utf-8':'text/html; charset=utf-8');res.end(req.url==='/bundle.js'?await fs.readFile(path.join(temp,'bundle.js')):'<!doctype html><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><div id="root"></div><script src="/bundle.js"></script>')});
+await new Promise(r=>server.listen(0,'127.0.0.1',r));const origin=`http://127.0.0.1:${server.address().port}`;let browser;
+try{
+ browser=await chromium.launch({executablePath:process.env.PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH||chromium.executablePath(),headless:true,args:['--no-sandbox']});
+ for(const width of [1440,390])for(const locale of ['en','th']){
+  const context=await browser.newContext({viewport:{width,height:850}}),errors=[];await context.route('**/*',r=>new URL(r.request().url()).origin===origin?r.continue():r.abort());await context.addInitScript(l=>window.qaLocale=l,locale);
+  const page=await context.newPage();page.on('pageerror',e=>errors.push(e.message));await page.goto(origin+'/trips/synthetic');await page.waitForFunction(()=>window.ready);
+  await page.getByLabel('Unsaved draft').fill('Preserve this draft');
+  await page.evaluate(()=>{window.providerMode='outage';window.dispatchEvent(new Event('focus'))});await page.getByRole('alert').waitFor();assert.equal(await page.getByLabel('Unsaved draft').isVisible(),false);assert.deepEqual(await page.evaluate(()=>window.destinations),[]);
+  await page.evaluate(()=>window.providerMode='same');await page.getByRole('button',{name:locale==='en'?'Retry':'ลองใหม่',exact:true}).click();await page.getByLabel('Unsaved draft').waitFor();assert.equal(await page.getByLabel('Unsaved draft').inputValue(),'Preserve this draft');
+  const other=await context.newPage();await other.goto(origin);await other.waitForFunction(()=>window.ready);await other.evaluate(()=>window.broadcastAuth('b'));await page.getByRole('status').waitFor();assert.equal(await page.getByLabel('Unsaved draft').isVisible(),false);assert.deepEqual(await page.evaluate(()=>window.destinations),['/trips/synthetic']);
+  await page.reload();await page.waitForFunction(()=>window.ready);await other.evaluate(()=>window.broadcastAuth(null));await page.getByRole('status').waitFor();assert.equal(await page.getByLabel('Unsaved draft').isVisible(),false);
+  await page.reload();await page.waitForFunction(()=>window.ready);await page.getByRole('button',{name:locale==='en'?'Sign out':'ออกจากระบบ',exact:true}).click();await page.getByRole('status').waitFor();assert.equal(await page.evaluate(()=>window.signouts),1);assert.deepEqual(await page.evaluate(()=>window.destinations),['/']);assert.equal(await page.getByLabel('Unsaved draft').isVisible(),false);
+  assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth),true);assert.deepEqual(errors,[]);console.log(`PASS ${locale} ${width}px: actual React masking, retry draft preservation, synthetic cross-tab switch/logout, logout navigation, no overflow`);await context.close();
+ }
+}finally{if(browser)await browser.close();await new Promise(r=>server.close(r));await fs.rm(temp,{recursive:true,force:true})}
