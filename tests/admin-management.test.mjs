@@ -1,6 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
+import {sourceModule} from './intake-route-fixture.mjs';
 import {parseAdminQuery,literalContains,adminQueryHref,ADMIN_PAGE_SIZE} from '../lib/admin/query.ts';
 import {adminDemoPlaces,searchAdminDemo} from '../lib/admin/demo.ts';
 import {submitPlaceDecision} from '../lib/admin/moderation.ts';
@@ -18,6 +19,16 @@ test('private pages retain server role guards and no service-role client',()=>{f
 test('preview routes are gated, noindex and contain no production repositories',()=>{const layout=read('app/demo/admin/layout.tsx');assert.match(layout,/demoEnabled\(process.env.VERCEL_ENV,process.env.NODE_ENV\)\)notFound/);assert.match(layout,/index:false,follow:false/);for(const p of ['lib/admin/demo.ts','app/demo/admin/page.tsx','app/demo/admin/places/page.tsx'])assert.doesNotMatch(read(p),/supabase|createClient|contact_email|fetch\s*\(/)});
 test('moderation confirmation and finally cleanup remain present',()=>{const code=read('components/admin/AdminPlaceActions.tsx');assert.match(code,/confirm\?/);assert.match(code,/setConfirm\('approve'\)/);assert.match(code,/finally\{setLoading\(false\)\}/);assert.match(code,/role="alert"/);assert.match(code,/role="status"/)});
 test('admin shell keeps the traveller navigation out and avoids duplicate account links',()=>{const code=read('components/navigation/SiteChrome.tsx');assert.match(code,/const adminWorkspace=pathname==='\/admin'/);assert.match(code,/const preparation=pathname==='\/host\/start'\|\|adminWorkspace/);assert.match(read('components/auth/UserNav.tsx'),/isAdmin&&!inAdmin/)});
-test('production demo guard runs in Proxy before streamed layouts',()=>{const code=read('proxy.ts');assert.match(code,/pathname === '\/demo\/admin'/);assert.match(code,/pathname.startsWith\('\/demo\/admin\/'\)/);assert.match(code,/process.env.VERCEL_ENV !== 'preview'/);assert.match(code,/process.env.NODE_ENV !== 'development'/);assert.match(code,/new NextResponse\('Not found', \{status: 404/);assert.ok(code.indexOf("status: 404")<code.indexOf('NextResponse.next'));assert.match(code,/'X-Robots-Tag': 'noindex, nofollow'/)});
+test('production demo guard runs in Proxy before streamed layouts',()=>{const code=read('proxy.ts');assert.match(code,/pathname === '\/demo\/admin'/);assert.match(code,/pathname.startsWith\('\/demo\/admin\/'\)/);assert.match(code,/process.env.VERCEL_ENV !== 'preview'/);assert.match(code,/process.env.NODE_ENV !== 'development'/);assert.match(code,/new NextResponse\('Not found', \{status: 404/);assert.ok(code.indexOf('await refreshAuthSession(request,headers)')>code.indexOf('status: 404'));assert.match(code,/'X-Robots-Tag': 'noindex, nofollow'/)});
 
 test('integration preserves Imports, unified search and owned-place review access',()=>{assert.match(read('components/admin/AdminWorkspace.tsx'),/\['\/imports','นำเข้าข้อมูล','Imports','work'\]/);const chrome=read('components/navigation/SiteChrome.tsx');assert.match(chrome,/\['\/search','Search places','ค้นหาสถานที่','search'\]/);assert.doesNotMatch(chrome,/\['\/stays','Stays'/);assert.match(chrome,/<Icon name=\{icon\}/);const queue=read('components/admin/AdminPlaceQueue.tsx');assert.match(queue,/!demo\?<Link/);assert.match(queue,/Review place & media/);assert.doesNotMatch(queue,/!p.business_id&&!demo/)});
+
+test('production demo guard refuses both paths before session refresh or downstream rendering',async()=>{
+ let calls=0;
+ const {proxy}=await sourceModule('proxy.ts',{'next/server':{NextResponse:Response},'@/lib/supabase/proxy':{refreshAuthSession:async()=>{calls++;throw new Error('must not render')}}},{Headers,process:{env:{VERCEL_ENV:'production',NODE_ENV:'production'}}});
+ for(const path of ['/demo/admin','/demo/admin/places']){
+  const response=await proxy({nextUrl:new URL('https://example.test'+path)});
+  assert.equal(response.status,404);assert.equal(response.headers.get('X-Robots-Tag'),'noindex, nofollow');assert.equal(response.headers.get('Cache-Control'),'private, no-store');
+ }
+ assert.equal(calls,0);
+});
