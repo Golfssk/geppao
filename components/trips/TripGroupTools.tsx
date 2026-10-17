@@ -3,9 +3,10 @@ import {useEffect,useState} from 'react';
 import {useLocale} from '@/components/i18n/LocaleProvider';
 import {moneyToSatang,satangText,equalShares,expenseBalances,suggestedSettlements} from '@/lib/planner/group-money';
 type Group={people:any[];expenses:any[];transfers:any[];checklist:any[];polls:any[];votes:any[];members:any[];invites:any[];reservations:any[];history:any[]};
-export function TripGroupTools({tripId,canEdit,isOwner,currentUserId}:{tripId:string;canEdit:boolean;isOwner:boolean;currentUserId:string}){
+export function TripGroupTools({tripId,canEdit,isOwner,currentUserId,activeTab,onTabChange}:{tripId:string;canEdit:boolean;isOwner:boolean;currentUserId:string;activeTab?:string;onTabChange?:(tab:string)=>void}){
  const{locale}=useLocale(),en=locale==='en',t=(th:string,english:string)=>en?english:th;
- const[data,setData]=useState<Group|null>(null),[loading,setLoading]=useState(true),[busy,setBusy]=useState(false),[message,setMessage]=useState(''),[tab,setTab]=useState('members'),[invite,setInvite]=useState(''),[role,setRole]=useState('viewer');
+ const[data,setData]=useState<Group|null>(null),[loading,setLoading]=useState(true),[busy,setBusy]=useState(false),[message,setMessage]=useState(''),[localTab,setLocalTab]=useState('members'),[invite,setInvite]=useState(''),[role,setRole]=useState('viewer');
+ const tab=activeTab??localTab;const setTab=(value:string)=>{setLocalTab(value);onTabChange?.(value)};
  const[person,setPerson]=useState(''),[personKind,setPersonKind]=useState('adult');
  const[expense,setExpense]=useState({title:'',amount:'',payer:'',category:'other',date:''}),[editExpense,setEditExpense]=useState<any>(null),[splitMode,setSplitMode]=useState('equal'),[selected,setSelected]=useState<string[]>([]),[custom,setCustom]=useState<Record<string,string>>({});
  const[transfer,setTransfer]=useState({from:'',to:'',amount:''}),[check,setCheck]=useState({title:'',assignee:'',due:''}),[poll,setPoll]=useState({title:'',options:''});

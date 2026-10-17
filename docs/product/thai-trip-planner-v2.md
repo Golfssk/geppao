@@ -84,3 +84,18 @@ Release gate: no ledger/receipts exposed via public links; non-member access den
 See [group-planning-release.md](group-planning-release.md) for precise scope, tests, limits and remaining work. Invitations, exact THB ledger/settlements, assigned checklists/Thai packs, member voting and a personal manual reservation wallet are implemented. Do not interpret the unchecked broader roadmap items above as completed in full: private attachments, full concurrency, templates, offline sync and Thai planning/data expansion are still outstanding. Deployment and hosted migration evidence must be recorded before marking this delivery live.
 
 - Group delivery also includes versioned personal reservation editing and a public LINE summary/share action with safe title/date metadata; LINE crawler rendering on actual devices remains an external acceptance check.
+
+## Workspace arrangement delivery 037
+
+- [x] Unified Plan / Map / Expenses / Group views on saved trips; draft forms remain mounted across switches. Desktop Plan retains side-by-side overview; mobile Plan shows stops and Map is a separate view.
+- [x] Mouse drag handle for same-day ordering and cross-day drop onto a stop, day card or day tab. Keyboard/touch users retain explicit up/down and day-selector controls. Native touch dragging is NOT claimed.
+- [x] New ordering RPC compares source/target day membership, ranks and lock snapshots under trip/day/item locks. All changes commit together; stale ordering returns 409 and triggers refresh. Dense ranks are normalized safely. Up to 100 stops across affected days per operation.
+- [x] Same-day locked stops are ordering anchors; cannot move one or cross it. Cross-day moves clear old time windows and preserve notes, duration and cost. Existing target-day stops retain their relative order.
+- [x] Point details open in a native, portaled, Escape-dismissable dialog without leaving the trip, including from overview markers. Only already-loaded directory fields are displayed, with an external full-detail fallback.
+- [x] Unique SVG grid IDs per overview.
+
+**Concurrency boundary:** this is conflict-safe arrangement, not full itinerary concurrency or realtime sync. Legacy schedule/note/lock/add/delete and recalculation endpoints still need unified optimistic versions plus atomic whole-calculation commit. Arrangement snapshots intentionally exclude notes/price, and never overwrite those independently edited fields. A concurrent recalculation remains a follow-up risk; do not mark the broader conflict-management roadmap complete.
+
+**Still open:** real road-map/routing provider evaluation (existing diagrams are not roads), private booking/receipt attachments, opt-in offline/PWA sync/logout purge, copying public templates, nearby/backup suggestions preserving locked/suitability constraints, Thai departure/return/party/pricing inputs and verified nationwide planning-ready data. Hosted real-account/multi-device acceptance and actual LINE app/crawler checks remain unperformed.
+
+Release evidence belongs in the PR and issue 104 after tests, append-only migration 037 and production route verification. No paid resources or hosted synthetic records are required for this delivery.
