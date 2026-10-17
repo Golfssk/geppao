@@ -24,3 +24,36 @@ Tests under `host-auth-*` run through existing `npm run test:host` / `npm run ch
 ## Related work
 
 #113 metadata UI/API released to main; production smoke still required. #114 metadata grants and #117 personal deletion boundary remain proposals, not deployed database protections. Do not close security/recovery milestones merely because CI is green.
+
+## Logout / client lifecycle hardening
+
+The root client boundary now listens for Auth identity changes only when the server
+rendered an authenticated user. Logout masks the old UI and replaces the document
+instead of relying on a client-router refresh. Account changes likewise hide the
+old document and reload the current internal route for server authorization.
+Guest sign-in redirect ownership remains with the form / PKCE callback, avoiding
+competing redirects. Supabase signOut's existing default scope is unchanged.
+
+On focus, visible-tab restoration and persisted pageshow, authenticated pages
+validate with getUser. While verification runs, child DOM is hidden/inert but
+remains mounted (unsaved form values survive same-user validation). Network or
+provider failure keeps content hidden with localized retry; it does not clear
+cookies, revoke sessions or speculate that the user signed out. Auth callbacks
+stay synchronous; no awaited Auth operation runs inside the SDK callback.
+Cleanup and stale in-flight responses cannot reveal a document after transition.
+This UI boundary is not authorization: server getUser and RLS remain required.
+
+Coverage: nine additional behavioral regressions in host-auth-lifecycle plus
+`scripts/qa-auth-lifecycle.mjs` (actual React, local Chromium, TH/EN at 390/1440).
+The browser harness uses synthetic Auth and a synthetic BroadcastChannel only;
+it does not prove real Supabase cross-tab delivery, cookie revocation, BFCache
+behavior in Safari, real Google OAuth, or production account isolation. Run with
+`PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH=/path/to/chromium node scripts/qa-auth-lifecycle.mjs`.
+No external requests are allowed by the harness.
+
+Remaining: the Planner's existing per-tab sessionStorage draft is not account
+namespaced. This change preserves that behavior and must not be presented as
+complete local-storage/account isolation. Define guest-to-account draft transfer,
+logout retention and account-switch policy, then cover them before closing #120.
+Hosted multi-account acceptance remains gated by #115. No hosted configuration,
+schema, credentials, users or emails are changed here.
