@@ -22,8 +22,9 @@ No schema changes in Delivery 1. No migration needed, no production test records
 
 - [x] Trip wishlist/inbox independent of scheduled days; add from search/detail to inbox, assign later, remove, deduplicate. Persist per trip under RLS; do not use browser-only storage as a sync substitute.
 - [x] Atomic cross-day move RPC: serialize these RPCs on the trip, validate trip/day membership and expected source day, reject locked/stale items, clear affected route segments before FK change, clear start/end time explicitly, retain notes/duration/cost, invalidate both days.
-- [ ] Atomic same-day reorder and full optimistic versioning across existing direct item/recalculate APIs. The new trip lock does not serialize legacy endpoints; do not claim full conflict-free collaboration.
-- [ ] Drag-and-drop with equivalent keyboard move buttons, deterministic ordering and concurrent edit/version checks.
+- [x] Atomic same-day reorder and source/target order snapshots (037), including dense-rank normalization and route invalidation.
+- [ ] Full optimistic versioning across existing direct item/recalculate APIs. Arrangement locks do not serialize all legacy endpoints; do not claim full conflict-free collaboration.
+- [x] Mouse drag-and-drop with keyboard/touch move-button alternatives, deterministic ordering and arrangement-specific stale snapshot checks (037). Native touch drag and full content-edit concurrency are not claimed.
 - [x] Editor/viewer invite links (036): expiry, revocation, hashed tokens, signed-in acceptance and owner-only membership management. Public read-only share links must never grant edit access.
 - [x] Trip identity/created-at immutable guard; only the owner may rotate public share tokens. Existing editor planning access retained; future owner-only fields must be added to this guard.
 - [x] Replace `get_shared_trip` SQL body with strict allowlist, removing trip preferences/day notes; test RPC directly as anon as well as HTTP wrapper.
