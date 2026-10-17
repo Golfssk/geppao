@@ -8,6 +8,11 @@ for(const lang of ['th','en'] as const){
    const form=page.locator('form[action="/search"]');
    const choices=form.locator('label').filter({has:page.locator('input[type="radio"][name="type"]')});
    await expect(choices).toHaveCount(7);
+   // Next can stream the form into a hidden boundary while loading.tsx is visible.
+   // DOM count alone is not a layout-ready signal: wait for the real page.
+   await expect(form).toBeVisible();
+   await expect(page.getByRole('heading',{name:'กำลังโหลดข้อมูล...'})).toHaveCount(0);
+   await expect(choices.first()).toBeVisible();
    await page.evaluate(()=>document.fonts.ready);
    const boxes=await choices.evaluateAll(labels=>labels.map(label=>{
     const tile=label.querySelector('input + span')!,icon=tile.querySelector('svg')!,text=tile.querySelector('span')!;
@@ -21,8 +26,10 @@ for(const lang of ['th','en'] as const){
     expect(box.textLeft).toBeGreaterThan(box.iconRight);expect(box.centerGap).toBeLessThan(1);
    }
    // The last chip remains reachable in the horizontal rail on touch-sized viewports.
-   await choices.last().click();
-   await expect(form.locator('input[value="event"]')).toBeChecked();
+   await expect(async()=>{
+    await choices.last().click();
+    await expect(form.locator('input[value="event"]')).toBeChecked({timeout:1000});
+   }).toPass();
    await expect.poll(()=>page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth)).toBe(true);
   }
  });
