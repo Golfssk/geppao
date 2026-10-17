@@ -1,4 +1,4 @@
-import {tripMutation,tripUuid,tripFailure,tripRpcResult} from '@/lib/trips/mutation';
+import {tripMutation,tripUuid,tripFailure,tripRpcResult,tripVersion,tripVersionRequired} from '@/lib/trips/mutation';
 type Context={params:Promise<{id:string}>};
 export async function POST(request:Request,ctx:Context){
  const c=await tripMutation(request,ctx);if(c.response)return c.response;const b=c.b;
@@ -7,8 +7,9 @@ export async function POST(request:Request,ctx:Context){
 }
 export async function PATCH(request:Request,ctx:Context){
  const c=await tripMutation(request,ctx);if(c.response)return c.response;
+ if(!tripVersion(c.b.expectedVersion))return tripVersionRequired();
  if(!tripUuid(c.b.savedId)||!tripUuid(c.b.tripDayId))return tripFailure('เลือกจุดแวะและวัน',400);
- const {data,error}=await c.s.rpc('schedule_trip_wishlist',{target_trip_id:c.id,saved_stop_id:c.b.savedId,target_day_id:c.b.tripDayId});return tripRpcResult(data,error);
+ const {data,error}=await c.s.rpc('schedule_trip_wishlist_versioned',{target_trip_id:c.id,expected_revision:c.b.expectedVersion,saved_stop_id:c.b.savedId,target_day_id:c.b.tripDayId});return tripRpcResult(data,error);
 }
 export async function DELETE(request:Request,ctx:Context){
  const c=await tripMutation(request,ctx);if(c.response)return c.response;if(!tripUuid(c.b.savedId))return tripFailure('เลือกจุดแวะ',400);

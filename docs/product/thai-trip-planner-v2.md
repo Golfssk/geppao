@@ -100,3 +100,7 @@ See [group-planning-release.md](group-planning-release.md) for precise scope, te
 **Still open:** real road-map/routing provider evaluation (existing diagrams are not roads), private booking/receipt attachments, opt-in offline/PWA sync/logout purge, copying public templates, nearby/backup suggestions preserving locked/suitability constraints, Thai departure/return/party/pricing inputs and verified nationwide planning-ready data. Hosted real-account/multi-device acceptance and actual LINE app/crawler checks remain unperformed.
 
 Release evidence belongs in the PR and issue 104 after tests, append-only migration 037 and production route verification. No paid resources or hosted synthetic records are required for this delivery.
+
+
+## Itinerary reliability checkpoint (038 / 039)
+See `itinerary-reliability-release.md` for revision-checked item writes, atomic recalculation, draft conflict behavior, rollout/cutover gates and precise remaining scope. Hosted release status is recorded in issue #104; this document alone is not a deployment claim.
