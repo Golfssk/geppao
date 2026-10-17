@@ -65,6 +65,8 @@ export type CalculationItemInput = {
   estimated_cost: number | string | null;
   duration_minutes: number | null;
   is_locked: boolean;
+  cost_is_manual?: boolean;
+  duration_is_manual?: boolean;
   place?: PlaceSource | PlaceSource[] | null;
   event?: EventSource | EventSource[] | null;
 };
@@ -330,8 +332,12 @@ export function calculateTripDay(
     const source = first(item.place) ?? first(item.event);
     const isEvent = Boolean(first(item.event));
     const messages: ValidationMessage[] = [];
-    const currentCoordinates = coordinateOf(source);
-    const durationMinutes = asNumber(first(item.place)?.recommended_duration_minutes) ?? item.duration_minutes;
+    const currentCoordinates = source?.publication_status==='published'?coordinateOf(source):null;
+    const durationMinutes = item.is_locked||item.duration_is_manual!==false ? item.duration_minutes : (source?.publication_status==='published'?asNumber(first(item.place)?.recommended_duration_minutes):null) ?? item.duration_minutes;
+    const published=source?.publication_status==='published';
+    const preserveCost=item.is_locked||item.cost_is_manual!==false;
+    const price=preserveCost?{cost:asNumber(item.estimated_cost),messages:[]}:published?priceFor(source!,options.travelers,options.nights,options.rooms):{cost:null,messages:[]};
+    if(price.cost===null)missingPriceCount+=1;else estimatedTotalCost+=price.cost;
     let travelDistanceKm: number | null = null;
     let travelDurationMinutes: number | null = null;
 
@@ -363,15 +369,12 @@ export function calculateTripDay(
       messages.push({code: 'missing_coordinates', severity: 'warning', message: `${sourceName(source)} ยังไม่มีพิกัด จึงคำนวณเส้นทางไม่ได้`});
     }
 
-    if (source) {
+    if (published) {
       const scheduleMessages = isEvent
         ? validateEventSchedule(first(item.event) as EventSource, options.serviceDate, item.starts_at, item.ends_at)
         : validatePlaceHours(first(item.place) as PlaceSource, options.serviceDate, item.starts_at, item.ends_at);
       messages.push(...scheduleMessages);
-      const price = priceFor(source, options.travelers, options.nights, options.rooms);
       messages.push(...price.messages);
-      if (price.cost === null) missingPriceCount += 1;
-      else estimatedTotalCost += price.cost;
 
       if (previousItem?.ends_at && item.starts_at && travelDurationMinutes !== null) {
         const previousEnd = new Date(previousItem.ends_at).getTime();
@@ -380,8 +383,6 @@ export function calculateTripDay(
           messages.push({code: 'arrival_after_start', severity: 'conflict', message: `เวลาเดินทางทำให้ไปถึง ${sourceName(source)} ไม่ทันเวลาเริ่ม`});
         }
       }
-    } else {
-      missingPriceCount += 1;
     }
 
     if (previousItem?.starts_at && previousItem.ends_at && item.starts_at) {
@@ -395,7 +396,7 @@ export function calculateTripDay(
       durationMinutes,
       travelDistanceKm,
       travelDurationMinutes,
-      estimatedCost: source ? priceFor(source, options.travelers, options.nights, options.rooms).cost : null,
+      estimatedCost: price.cost,
       validationStatus: statusOf(messages),
       validationMessages: messages,
       locked: item.is_locked,

@@ -6,11 +6,13 @@ import {createClient} from '@/lib/supabase/server';
 const toIso = (serviceDate:string | null, time:string | null) => serviceDate && time ? `${serviceDate}T${time}:00+07:00` : null;
 
 export async function POST(request: Request) {
+  const origin=request.headers.get('origin');if(origin&&origin!==new URL(request.url).origin||request.headers.get('sec-fetch-site')==='cross-site')return NextResponse.json({error:'ไม่อนุญาตคำขอจากเว็บไซต์อื่น'},{status:403});
+  if(Number(request.headers.get('content-length')||0)>100000)return NextResponse.json({error:'ข้อมูลใหญ่เกินไป'},{status:413});
   const supabase = await createClient();
   const {data: auth} = await supabase.auth.getUser();
   if (!auth.user) return NextResponse.json({error: 'กรุณาเข้าสู่ระบบก่อนบันทึกทริป'}, {status: 401});
   let payload: {title?: string; plan?: any};
-  try {payload = await request.json();} catch {return NextResponse.json({error: 'ข้อมูล Plan ไม่ถูกต้อง'}, {status: 400});}
+  try {const text=await request.text();if(text.length>100000)return NextResponse.json({error:'ข้อมูลใหญ่เกินไป'},{status:413});payload=JSON.parse(text);} catch {return NextResponse.json({error: 'ข้อมูล Plan ไม่ถูกต้อง'}, {status: 400});}
   if(!payload||typeof payload!=='object'||Array.isArray(payload))return NextResponse.json({error:'ข้อมูล Plan ไม่ถูกต้อง'},{status:400});
   const {title, plan} = payload;
   if(title!==undefined&&(typeof title!=='string'||title.trim().length>120))return NextResponse.json({error:'ชื่อทริปต้องไม่เกิน 120 ตัวอักษร'},{status:400});
@@ -41,9 +43,13 @@ export async function POST(request: Request) {
   if(days?.length!==plannedDays)return NextResponse.json({error:'สร้างทริปแล้ว แต่จำนวนวันไม่ครบ กรุณาเปิดทริปเพื่อตรวจสอบ',tripId},{status:500});
   const itineraryByKey = new Map<string, any>();for (const item of plan.itinerary ?? []) if(item&&typeof item==='object') itineraryByKey.set(`${item.day}:${item.id}`, item);
   const rows = plan.days.flatMap((day:any) => {const tripDay = days?.find((value:any) => value.day_number === day.day);if (!tripDay) return [];return (day.items ?? []).map((item:any, index:number) => {const itinerary = itineraryByKey.get(`${day.day}:${item.id}`);const safeTime=typeof itinerary?.startTime==='string'&&/^([01]\d|2[0-3]):[0-5]\d$/.test(itinerary.startTime)?itinerary.startTime:null;const startsAt = toIso(tripDay.service_date, safeTime);const duration = Number(item.duration);const endsAt = startsAt && Number.isFinite(duration) && duration > 0 ? new Date(new Date(startsAt).getTime() + duration * 60000).toISOString() : null;return {trip_day_id: tripDay.id,place_id: item.kind === 'place' ? item.id : null,event_id: item.kind === 'event' ? item.id : null,position: index*1024,starts_at: startsAt,ends_at: endsAt,duration_minutes: Number.isFinite(duration) && duration > 0 ? duration : null,estimated_cost: item.cost == null ? null : Number(item.cost),recommendation_reason: item.reason || null};});});
-  if (rows.length) {const {error: itemError} = await supabase.from('trip_items').insert(rows);if (itemError) return NextResponse.json({error:'สร้างทริปแล้ว แต่เพิ่มรายการไม่ครบ กรุณาเปิดทริปเพื่อตรวจสอบ', tripId}, {status: 500});}
+  const {data:seedOptions,error:seedOptionsError}=await supabase.rpc('trip_plan_options',{target_trip_id:tripId});
+  if(seedOptionsError)return NextResponse.json({error:'สร้างทริปแล้ว แต่โหลดเลขรุ่นไม่สำเร็จ',tripId},{status:503});
+  if (rows.length) {const {error: itemError} = await supabase.rpc('seed_trip_plan',{target_trip_id:tripId,expected_revision:seedOptions?.expectedVersion,plan_items:rows});if (itemError) return NextResponse.json({error:'สร้างทริปแล้ว แต่เพิ่มรายการไม่ครบ กรุณาเปิดทริปเพื่อตรวจสอบ', tripId}, {status: 500});}
   try {
-    const recalculate=await recalculateTrip(request,{params:Promise.resolve({id:String(tripId)})});
+    const {data:options,error:optionsError}=await supabase.rpc('trip_plan_options',{target_trip_id:tripId});
+    if(optionsError)throw Error('Cannot load revision');
+    const recalculate=await recalculateTrip(new Request(request.url,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({expectedVersion:options?.expectedVersion})}),{params:Promise.resolve({id:String(tripId)})});
     const calculation=await recalculate.json();
     if(!recalculate.ok)return NextResponse.json({id:tripId,warning:'บันทึกแล้ว แต่ยังคำนวณเวลาไม่สำเร็จ กรุณากดคำนวณใหม่ในทริป'},{status:201});
     return NextResponse.json({id:tripId,calculation},{status:201});
