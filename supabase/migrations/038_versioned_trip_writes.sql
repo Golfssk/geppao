@@ -34,7 +34,7 @@ declare revision bigint;
 begin
  if auth.uid() is null or not can_edit_trip(target_trip_id) then raise exception 'Not permitted' using errcode='42501'; end if;
  select plan_revision into revision from trips where id=target_trip_id for update;
- if revision is null then raise exception 'Not permitted' using errcode='42501'; end if;
+ if revision is null or not can_edit_trip(target_trip_id) then raise exception 'Not permitted' using errcode='42501'; end if;
  if expected_revision is null or revision<>expected_revision then raise exception 'Plan changed. Reload before saving.' using errcode='40001'; end if;
 end $$;
 create function public.invalidate_trip_plan(target_day_ids uuid[]) returns void language plpgsql security definer set search_path=public,pg_temp as $$
