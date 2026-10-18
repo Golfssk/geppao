@@ -11,9 +11,11 @@ export async function POST(request: Request) {
   const supabase = await createClient();
   const {data: auth} = await supabase.auth.getUser();
   if (!auth.user) return NextResponse.json({error: 'กรุณาเข้าสู่ระบบก่อนบันทึกทริป'}, {status: 401});
-  let payload: {title?: string; plan?: any};
+  let payload: {title?: string; plan?: any; expectedOwnerId?:unknown};
   try {const text=await request.text();if(text.length>100000)return NextResponse.json({error:'ข้อมูลใหญ่เกินไป'},{status:413});payload=JSON.parse(text);} catch {return NextResponse.json({error: 'ข้อมูล Plan ไม่ถูกต้อง'}, {status: 400});}
   if(!payload||typeof payload!=='object'||Array.isArray(payload))return NextResponse.json({error:'ข้อมูล Plan ไม่ถูกต้อง'},{status:400});
+  // Stale-client assertion only; verified getUser and RLS still authorize.
+  if(typeof payload.expectedOwnerId!=='string'||payload.expectedOwnerId!==auth.user.id)return NextResponse.json({error:'บัญชีมีการเปลี่ยนแปลง กรุณาโหลดหน้าใหม่ก่อนบันทึก ร่างเดิมยังแยกเก็บไว้',code:'ACCOUNT_CHANGED'},{status:409,headers:{'Cache-Control':'private, no-store'}});
   const {title, plan} = payload;
   if(title!==undefined&&(typeof title!=='string'||title.trim().length>120))return NextResponse.json({error:'ชื่อทริปต้องไม่เกิน 120 ตัวอักษร'},{status:400});
   if (!plan || !Array.isArray(plan.days) || !plan.days.length) return NextResponse.json({error: 'ไม่พบกำหนดการรายวันจาก Planner'}, {status: 400});
