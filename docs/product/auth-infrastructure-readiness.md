@@ -110,3 +110,13 @@ late save/generation after switching, logout retention, legacy quarantine and
 successful own-key cleanup. External requests are blocked. Real hosted OAuth,
 cookie revocation, multi-account and Safari acceptance remain gated by #115/#120.
 No hosted Auth, users, emails, SMTP, billing or database changes are made here.
+
+## Existing-main operating decision
+
+The owner has since explicitly approved using/changing the one existing main
+backend rather than creating a second project. See #115 and
+`production-infra-hardening.md` for the narrow production-safe rollout and its
+actual-evidence requirements. Earlier references to an isolated-environment gate
+remain applicable to destructive/recovery drills, not a blanket ban on reviewed
+non-destructive main changes. This does not mark hosted Auth/multi-account
+acceptance complete, authorize paid resources, or establish backup/restore.
