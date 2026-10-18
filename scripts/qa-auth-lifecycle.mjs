@@ -4,11 +4,12 @@ import {loadBindings,transform} from 'next/dist/build/swc/index.js';import {chro
 const require=createRequire(import.meta.url),{webpack}=require('next/dist/compiled/webpack/webpack');
 const root=path.resolve(path.dirname(new URL(import.meta.url).pathname),'..'),temp=await fs.mkdtemp(path.join(os.tmpdir(),'geppao-auth-qa-'));
 await loadBindings();
-for(const name of ['AuthSessionBoundary','UserNav']){
+for(const name of ['AuthSessionBoundary','UserNav','PlannerDraftScope']){
  let src=await fs.readFile(path.join(root,'components/auth',name+'.tsx'),'utf8');
- src=src.replace(/import styles from '[^']+\.css';/,`const styles={};`).replaceAll("'@/components/i18n/LocaleProvider'","'./locale.js'").replaceAll("'@/lib/auth/navigation'","'./navigation.js'").replaceAll("'@supabase/ssr'","'./auth.js'").replaceAll("'next/navigation'","'./router.js'").replaceAll("'next/link'","'./link.js'");
+ src=src.replace(/import styles from '[^']+\.css';/,`const styles={};`).replaceAll("'@/components/i18n/LocaleProvider'","'./locale.js'").replaceAll("'@/lib/auth/navigation'","'./navigation.js'").replaceAll("'@/lib/planner/draft-scope'","'./draft-scope.js'").replaceAll("'./PlannerDraftScope'","'./PlannerDraftScope.js'").replaceAll("'@supabase/ssr'","'./auth.js'").replaceAll("'next/navigation'","'./router.js'").replaceAll("'next/link'","'./link.js'");
  const {code}=await transform(src,{filename:name+'.tsx',jsc:{parser:{syntax:'typescript',tsx:true},transform:{react:{runtime:'automatic'}}},module:{type:'es6'}});await fs.writeFile(path.join(temp,name+'.js'),code);
 }
+const {code:scopeCode}=await transform(await fs.readFile(path.join(root,'lib/planner/draft-scope.ts'),'utf8'),{filename:'draft-scope.ts',jsc:{parser:{syntax:'typescript'}},module:{type:'es6'}});await fs.writeFile(path.join(temp,'draft-scope.js'),scopeCode);
 await fs.writeFile(path.join(temp,'locale.js'),`export const useLocale=()=>({locale:window.qaLocale||'en'});`);
 await fs.writeFile(path.join(temp,'router.js'),`export const usePathname=()=>'/trips/synthetic';`);
 await fs.writeFile(path.join(temp,'link.js'),`export default function Link(){return null}`);
