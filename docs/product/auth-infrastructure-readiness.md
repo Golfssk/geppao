@@ -51,9 +51,62 @@ behavior in Safari, real Google OAuth, or production account isolation. Run with
 `PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH=/path/to/chromium node scripts/qa-auth-lifecycle.mjs`.
 No external requests are allowed by the harness.
 
-Remaining: the Planner's existing per-tab sessionStorage draft is not account
-namespaced. This change preserves that behavior and must not be presented as
-complete local-storage/account isolation. Define guest-to-account draft transfer,
-logout retention and account-switch policy, then cover them before closing #120.
+The account-scoped follow-up below supersedes the earlier unnamespaced draft
+finding. Local mocked coverage must not be equated with hosted account isolation.
 Hosted multi-account acceptance remains gated by #115. No hosted configuration,
 schema, credentials, users or emails are changed here.
+
+## Account-scoped Planner draft follow-up
+
+Planner now uses a v2 per-tab sessionStorage namespace per server-rendered user ID
+and a separate guest namespace. The envelope owner must match its key. Malformed,
+oversized, expired (24h since last save) and future-dated drafts are not restored.
+Logout/account switch retains the old account's draft only in its namespace, for
+that account to resume in this tab. It is never copied into the guest namespace
+or another account. Existing unowned v1 data is retained but quarantined with a
+localized notice: no migration can safely infer its original owner.
+
+A signed-in Planner may offer a guest draft without automatically displaying its
+contents. An explicit localized adopt/replace action copies to the chosen account
+before removing the guest source; the UI clearly states that it replaces the
+current account draft. Copy failure preserves the source. Removal failure leaves
+both copies. Any unresolved save marker in either draft survives adoption.
+
+This is automatic-restore isolation, not encrypted storage or authorization.
+Same-origin scripts, extensions/devtools and the same browser profile can inspect
+sessionStorage. No credentials, tokens or provider errors are stored in the draft.
+
+The root Auth boundary owns an in-memory draft scope. Session checking pauses
+writes and invalidates operation snapshots. Same-user verification allows fresh
+operations, never late responses. Identity departure closes the scope permanently.
+Planner ignores generation/save results after invalidation or route unmount and
+never navigates to a stale returned trip ID. Server identity changes remount the
+content subtree. It cannot cancel a database request already accepted under its
+original identity; server Auth and RLS remain authoritative.
+
+The from-plan API now requires `expectedOwnerId` to match independently validated
+getUser(). Missing/null/mismatched values return private/no-store 409 with
+`ACCOUNT_CHANGED` before publication reads/writes. Old clients must reload. The
+expected owner is a stale-client assertion, not an access grant.
+
+Before save, Planner records an unresolved-save marker in its own draft. Ambiguous
+network/5xx responses and identity-check invalidation retain it. Restoring that
+draft blocks another save and links to My trips. Retrying requires explicit review
+and confirmation. Definite pre-write rejection clears the marker; partial-save
+IDs retain the recovery link. Success removes only the own key and suppresses late
+autosave. This mitigates accidental retries; it is NOT database-backed exactly-once
+or idempotency. Disabled/full storage shows a localized memory-only warning; do
+not imply recovery after the page closes when persistence has failed.
+
+Local verification:
+- `npm run check` (behavior/routes/SQL regressions, TypeScript and build).
+- `PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH=/path/to/chromium node scripts/qa-auth-lifecycle.mjs`.
+- `PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH=/path/to/chromium node scripts/qa-planner-draft-isolation.mjs`.
+
+The latter uses actual React Planner/Auth with synthetic Auth/APIs, TH/EN at
+390/1440px. It covers A/B/guest isolation, explicit adoption, retained account
+routines, owner assertion payloads, uncertainty across reload, confirmed retry,
+late save/generation after switching, logout retention, legacy quarantine and
+successful own-key cleanup. External requests are blocked. Real hosted OAuth,
+cookie revocation, multi-account and Safari acceptance remain gated by #115/#120.
+No hosted Auth, users, emails, SMTP, billing or database changes are made here.

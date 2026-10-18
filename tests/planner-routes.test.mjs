@@ -11,7 +11,7 @@ function database({authenticated=true,canEdit=true,unpublished=false,itemsError=
 }
 const body={input:'วันเดียว ธรรมชาติ',startDate:'2030-01-01',endDate:'2030-01-01',travelers:2,preferences:{tripMode:'day_trip'}};
 const plan={startDate:'2030-01-01',endDate:'2030-01-01',travelers:2,days:[{day:1,items:[{id:placeId,kind:'place',cost:0,duration:90}]}],itinerary:[{day:1,id:placeId,startTime:'09:00'}]};
-const req=b=>new Request('https://local.test/api',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify(b&&typeof b==='object'&&!Array.isArray(b)?{expectedVersion:7,...b}:b)});
+const req=b=>new Request('https://local.test/api',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify(b&&typeof b==='object'&&!Array.isArray(b)?{expectedVersion:7,expectedOwnerId:id,...b}:b)});
 async function planner(db){return sourceModule('app/api/planner/v2/route.ts',{'next/server':jsonResponse,'@/lib/supabase/server':{createClient:async()=>db},'@/lib/planner/request':helpers})}
 async function save(db,recalc=async()=>Response.json({error:'failed'},{status:500})){return sourceModule('app/api/trips/from-plan/route.ts',{'next/server':jsonResponse,'@/lib/supabase/server':{createClient:async()=>db},'@/lib/planner/request':helpers,'@/app/api/trips/[id]/recalculate/route':{POST:recalc}})}
 test('real planner route produces nonempty published day plan, free prices and duration-based times',async()=>{const db=database(),r=await(await planner(db)).POST(req(body));assert.equal(r.status,200);const {plan:p}=await r.json();assert.equal(p.items.length,1);assert.equal(p.totalEstimatedCost,0);assert.equal(p.itinerary[0].startTime,'09:00');assert.equal(p.travelers,2);assert.equal(db.writes.length,0)});
@@ -34,3 +34,5 @@ test('saved item schedule rejects negative duration and reversed times',async()=
 
 test('locked items cannot be moved or deleted without unlocking',async()=>{for(const method of ['PATCH','DELETE']){const db=database({locked:true});const r=await(await itemRoute(db))[method](req({itemId:id,notes:'test'}),ctx);assert.equal(r.status,409);assert.equal(db.writes.length,0)}});
 test('owner can save valid start, end and duration on scoped item',async()=>{const db=database();const r=await(await itemRoute(db)).PATCH(req({itemId:id,startsAt:'2030-01-01T09:00:00+07:00',endsAt:'2030-01-01T04:00:00Z',durationMinutes:120}),ctx);assert.equal(r.status,200);assert.equal(db.writes.find(w=>w.table==='trip_items').rows.durationMinutes,120)});
+
+test('save rejects missing/null/mismatched rendered owner before reads or writes',async()=>{for(const expectedOwnerId of [undefined,null,placeId,{},'',42]){const db=database(),r=await(await save(db)).POST(req({plan,expectedOwnerId}));assert.equal(r.status,409);assert.equal((await r.json()).code,'ACCOUNT_CHANGED');assert.equal(db.writes.length,0);assert.equal(db.calls.length,0);assert.equal(r.headers.get('cache-control'),'private, no-store')}});

@@ -1,7 +1,8 @@
 import test from 'node:test';import assert from 'node:assert/strict';import React from 'react';
 import {sourceModule} from './intake-route-fixture.mjs';
+import {createDraftScope} from '../lib/planner/draft-scope.ts';
 import {safeAuthNext} from '../lib/auth/redirect.ts';
-function hooks(){const slots=[],effects=[];let index=0;return{slots,effects,react:{...React,useState(v){const i=index++;if(!(i in slots))slots[i]=v;return[slots[i],v=>slots[i]=v]},useRef(v){const i=index++;if(!(i in slots))slots[i]={current:v};return slots[i]},useEffect(fn){effects.push(fn)}},render(C,p){index=0;return C(p)}}}
+function hooks(){const slots=[],effects=[];let index=0;return{slots,effects,react:{...React,useState(v){const i=index++;if(!(i in slots))slots[i]=v;return[slots[i],v=>slots[i]=v]},useRef(v){const i=index++;if(!(i in slots))slots[i]={current:v};return slots[i]},useMemo(fn,deps){const i=index++;if(!(i in slots)||deps.some((v,j)=>v!==slots[i].deps[j]))slots[i]={deps,value:fn()};return slots[i].value},useEffect(fn){effects.push(fn)}},render(C,p){index=0;return C(p)}}}
 function all(t,p,out=[]){if(!t||typeof t!=='object')return out;if(p(t))out.push(t);for(const c of[t.props?.children].flat(Infinity))all(c,p,out);return out}
 const button=t=>all(t,n=>n.type==='button')[0];
 async function navComponent(h,auth,navigate,locale=()=> 'en'){
@@ -22,9 +23,9 @@ test('logout provider errors and exceptions allow retry, never navigate and tran
 async function boundary(userId='a',getUser=async()=>({data:{user:{id:'a'}},error:null})){
  const h=hooks(),win=new EventTarget(),doc=new EventTarget(),dest=[];let callback,unsub=0;
  win.location={pathname:'/trips/123',search:'?lang=en',hash:'#plan'};doc.visibilityState='visible';
- const C=(await sourceModule('components/auth/AuthSessionBoundary.tsx',{'react':h.react,'@supabase/ssr':{createBrowserClient:()=>({auth:{getUser,onAuthStateChange(cb){callback=cb;return{data:{subscription:{unsubscribe(){unsub++}}}}}}})},'@/components/i18n/LocaleProvider':{useLocale:()=>({locale:'en'})},'@/lib/auth/navigation':{hardAuthNavigate:p=>dest.push(p)}},{process:{env:{}},window:win,document:doc})).AuthSessionBoundary;
+ const C=(await sourceModule('components/auth/AuthSessionBoundary.tsx',{'react':h.react,'@supabase/ssr':{createBrowserClient:()=>({auth:{getUser,onAuthStateChange(cb){callback=cb;return{data:{subscription:{unsubscribe(){unsub++}}}}}}})},'@/components/i18n/LocaleProvider':{useLocale:()=>({locale:'en'})},'@/lib/auth/navigation':{hardAuthNavigate:p=>dest.push(p)},'@/lib/planner/draft-scope':{createDraftScope},'./PlannerDraftScope':{PlannerDraftContext:React.createContext(null)}},{process:{env:{}},window:win,document:doc})).AuthSessionBoundary;
  const p={userId,children:React.createElement('input',{defaultValue:'unsaved'})};let tree=h.render(C,p);const container=all(tree,n=>n.type==='div')[0];container.props.ref.current={hidden:false,inert:false};const element=container.props.ref.current;const cleanup=h.effects[0]();
- return{h,win,doc,dest,element,cleanup,event:(...args)=>callback(...args),render:()=>h.render(C,p),unsub:()=>unsub};
+ return{h,win,doc,dest,element,cleanup,scope:tree.props.value.scope,event:(...args)=>callback(...args),render:()=>h.render(C,p),unsub:()=>unsub};
 }
 const tick=()=>new Promise(r=>setImmediate(r));
 test('same-user refresh preserves drafts; changed account hides synchronously and reloads current route once',async()=>{
@@ -56,3 +57,6 @@ test('hard auth navigation sanitizes target, signals invalidation and deduplicat
  const {hardAuthNavigate}=await sourceModule('lib/auth/navigation.ts',{'./redirect':{safeAuthNext}},{window:win,Event});
  hardAuthNavigate('//evil.invalid');hardAuthNavigate('/');assert.deepEqual(dest,['/trips']);assert.equal(signals,1);
 });
+
+test('auth boundary synchronously closes scoped draft work on identity change',async()=>{const b=await boundary();const token=b.scope.capture();assert.ok(b.scope.accepts(token));b.event('SIGNED_IN',{user:{id:'b'}});assert.equal(b.scope.accepts(token),false);b.scope.setAvailable(true);assert.equal(b.scope.capture(),null);b.cleanup()});
+test('same-user verification permits fresh writes but rejects work started before checking',async()=>{const b=await boundary();const token=b.scope.capture();b.win.dispatchEvent(new Event('focus'));assert.equal(b.scope.capture(),null);await tick();assert.equal(b.scope.accepts(token),false);assert.notEqual(b.scope.capture(),null);b.cleanup()});
